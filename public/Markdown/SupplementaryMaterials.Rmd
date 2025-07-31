@@ -1,0 +1,5556 @@
+---
+title: "Variation in the production of te reo Māori opening vowel sequences: Supplementary Materials"
+author:   
+- name: Kirsten Culhane
+  email: kirsten.culhane@canterbury.ac.nz
+  orcid: 0000-0001-6369-7720
+  affiliations:
+    - ref: nzilbb
+  corresponding: true
+
+- name: Jen Hay
+  email: jen.hay@canterbury.ac.nz
+  orcid: 0000-0001-8127-0413
+  affiliations:
+    - ref: nzilbb
+    - ref: uc-ling
+
+- name: Simon Todd
+  email: sjtodd@ucsb.edu
+  orcid: 0000-0003-2665-5737
+  affiliations:
+    - ref: usbc
+
+- name: Márton Sóskuthy
+  email: marton.soskuthy@ubc.ca
+  orcid: 0000-0002-5074-4767
+  affiliations:
+    - ref: ubc
+
+- name: Allie Osborne
+  email: allie.osborne@canterbury.ac.nz
+  orcid: 0009-0008-2493-3741
+  affiliations:
+    - ref: uc-ling
+
+- name: Penny Harris
+  email: penny.harris@pg.canterbury.ac.nz
+  affiliations:
+    - ref: uc-ling
+
+- name: Kate Maindonald
+  email: kate.maindonald@canterbury.ac.nz
+  affiliations:
+    - ref: uc-ling
+
+- name: Jeanette King
+  email: j.king@canterbury.ac.nz
+  orcid: 0000-0001-7734-722X
+  affiliations:
+    - ref: aotahi
+    - ref: nzilbb
+
+- name: Forrest Panther
+  email: forrest.panther@canterbury.ac.nz
+  orcid: 0000-0002-3884-3201
+  affiliations:
+    - ref: uc-ling
+    
+- name: Peter Keegan
+  email: p.keegan@auckland.ac.nz
+  orcid: 0000-0002-3663-2814
+  affiliations:
+    - ref: uauckland
+
+affiliations:
+  - id: nzilbb
+    name: New Zealand Institute of Language, Brain and Behaviour, University of Canterbury
+    city: Christchurch
+    country: New Zealand
+
+  - id: uc-ling
+    name: Department of Linguistics, University of Canterbury
+    city: Christchurch
+    country: New Zealand
+
+  - id: aotahi
+    name: Aotahi School of Māori and Indigenous Studies, University of Canterbury
+    city: Christchurch
+    country: New Zealand
+
+  - id: uauckland
+    name: University of Auckland
+    city: Auckland
+    country: New Zealand
+
+  - id: usbc
+    name: University of California, Santa Barbara
+    city: Santa Barbara
+    country: USA
+
+  - id: ubc
+    name: University of British Columbia
+    city: Vancouver
+    country: Canada
+    
+date: today
+lightbox: auto
+bibliography: 
+  - References.bib
+format: 
+  html:
+    embed-resources: true
+    self-contained: true
+    theme: flatly
+    toc: true
+    toc-expand: true
+    toc-location: right
+    smooth-scroll: true
+    code-summary: "Click here to view code."
+    title-block-banner: '#95A044'
+    anchor-sections: true
+    number-sections: true
+    cap-location: margin
+    fig-responsive: true
+    lang: 'en-US'
+    execute:
+      warning: false
+    code-fold: true
+editor: 
+  markdown: 
+    wrap: 72
+    
+---
+
+```{css, echo=FALSE}
+.title {
+  color: white;
+}
+```
+
+ 
+# Overview 
+ 
+This markdown file contains supplementary materials for the manuscript "Variation in the production of te reo Māori opening vowel sequences". It contains all code used for data selection, acoustic measurements and filtering, as well as the analysis and data visualisations. This document is structured as follows: 
+ 
+-  @sec-data-packages loads the R packages used 
+
+-  @sec-data-select-annotate-filter outlines the data selection and annotation procedure 
+
+- @sec-measure-filter contains the code for measuring formats, pitch, intensity, and for for filtering the data laid out in §3.3 of the manuscript.  This section contains a number of non-executable chunks, some of which require a LaBB-CAT account to run. They have been included for archiving purposes. 
+
+- @sec-fCPA contains the code for the fPCA analysis, which is described in §3.4 of the manuscript
+
+- @sec-dur-filter contains the code for filtering the duration data, which is described in §3.3.3 of the manuscript
+
+- @sec-uCPA contains the code for the uPCA analysis and visualizations, which are presented in §4.1 of the manuscript
+
+- @sec-tangent examines the possibility  that speakers with predominantly high uPC1 scores and predominantly low uPC1 scores have different monophthong spaces, and
+that the different trajectory we see between high and low uPC1 tokens are actually a reflection of these differences (Footnote 1 of the manuscript)
+
+- @sec-regression  contains the code for the regression analysis and visualizations, which are presented in §4.2 of the manuscript
+
+- @sec-speaker-intercepts contains the code for the speaker intercept analysis, which is described in §4.3.1 of the manuscript
+
+- @sec-category-vis contains  code for the visualizations of monophthongs and sequence trajectories, plotted per speaker category, which are presented in §4.3.2 of the manuscript
+
+# Libraries {#sec-data-packages}
+
+1.  Required libraries.
+
+```{r load-libraries}
+#| warning: false
+
+# Data manipulation and visualisation
+library(tidyverse)
+library(janitor)
+library(formatR)
+library(gganimate)
+library(gridExtra)
+library(grid)
+library(ggrepel)
+library(scales)
+library(glue)
+library(factoextra)
+library(gridExtra)
+library(geomtextpath)
+library(sjPlot)
+library(RColorBrewer)
+
+#Measurements
+library(nzilbb.labbcat)
+library(rmdformats)
+library(rPraat)
+
+# Statistical analyses
+library(nzilbb.vowels)
+library(fdapace)
+library(mgcv) 
+library(locfit)
+library(itsadug)
+library(qgam)
+library(lme4)
+library(lmerTest)
+library(car)
+library(emmeans)
+
+# Other
+library(here) # localised file paths
+library(knitr)
+library(kableExtra) # html tables when rendering
+library(grateful) # write package citations at end of document
+library(extrafont) # to use custom fonts in 
+library(xtable) 
+
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = here::here())
+print(here::here())
+``` 
+# Data selection and annotation (Manuscript §3.2){#sec-data-select-annotate-filter}
+
+1. Data from the MAONZE corpus: all tokens of opening sequences,  and monopthongs which occur between two consonants  
+
+```{r}
+opening_seqs <- read.csv(here("public", "Data", "MAONZE_opening_seqs.csv")) 
+
+betweenConsonantsMatches <- read.csv(here("public", "Data", "betweenConsonantsMatches.csv"))
+ 
+
+participant_info <- opening_seqs %>% 
+  select(Speaker, participant_gender, category) %>% 
+  unique()
+
+```
+
+
+
+2. Various functions for data selection
+
+Function to remove punctuation and whitespace  
+```{r}
+
+remove_punctuation_whitespace <- function(string) {
+  # Use gsub to replace punctuation and whitespace with an empty string
+  gsub("[[:punct:][:space:]]", "", string)
+}
+
+```
+
+Functions to identify if vowel sequence is initial or final in the word 
+
+```{r}
+VV_initial <- function(word, vowel_sequence) {
+  return(substr(word, 1, nchar(vowel_sequence)) == vowel_sequence)
+}
+
+VV_final <- function(word, vowel_sequence) {
+  return(substr(word, nchar(word) - nchar(vowel_sequence) + 1, nchar(word)) == vowel_sequence)
+} 
+```  
+
+Function to identify if words are V-final or V-initial 
+```{r}
+V_final <- function(string) {
+  string <- tolower(string)
+  n <- nchar(string)
+  if (n < 1) {
+    return(FALSE)
+  }
+  last_char <- substring(string, n, n)
+  last_char %in% c("a", "e", "i", "o", "u")
+}
+
+V_initial <- function(string) {
+  first_char <- tolower(substring(string, 1, 1))
+  first_char %in% c("a", "e", "i", "o", "u")
+}
+
+
+```
+
+Function to identify sequences of three vowels 
+```{r}
+three_vowels <- function(word, vowel_sequence) {
+  pattern <- paste0("(?<=[aeiou])", vowel_sequence, "|", vowel_sequence, "(?=[aeiou])")
+  return(grepl(pattern, word, perl = TRUE))
+}
+
+```
+
+3. Prepare Before.Match (previous word) data. 
+Here we replace V: with vv in the Before.Match column. This is because colons <:> will affect the results when filtering 
+instances where the previous word is vowel final (i.e. if a word ends with orthographic v:, it will not be considered vowel-final ) 
+```{r}
+opening_seqs$Before.Match = str_replace_all(opening_seqs$Before.Match, "a:", "aa")
+opening_seqs$Before.Match = str_replace_all(opening_seqs$Before.Match, "e:", "ee")
+opening_seqs$Before.Match = str_replace_all(opening_seqs$Before.Match, "i:", "ii")
+opening_seqs$Before.Match = str_replace_all(opening_seqs$Before.Match, "o:", "oo")
+opening_seqs$Before.Match = str_replace_all(opening_seqs$Before.Match, "u:", "uu")
+
+```
+
+4. Exclude various vowel sequences using functions defined above
+```{r}
+
+data_filtered <- opening_seqs %>%
+#determine if the sequence is initial in the word 
+   mutate(word_VV_initial = mapply(VV_initial, 
+                                        Target.orthography, 
+                                        Target.vowelCluster)) %>% 
+   #remove punctuation from before matches, bcs  can affect the results of  prev_V (e.g various words end with . , which could mean  it is not  considered vowel-final )
+  mutate(Before.Match = remove_punctuation_whitespace(Before.Match)) %>% 
+  #determine if the previous word is V final  
+   mutate(prev_v = ifelse(sapply(Before.Match, V_final), TRUE, FALSE)) %>% 
+  #if word_VV_initial = TRUE and prev_v = TRUE, filter it out 
+    filter(!(word_VV_initial & prev_v)) %>% 
+#determine if the sequence is final in the word
+   mutate(word_VV_final = mapply(VV_final, 
+                                        Target.orthography, 
+                                        Target.vowelCluster)) %>% 
+   #is the next word vowel initial?
+  mutate(following_V = ifelse(sapply(After.Match, V_initial), TRUE, FALSE)) %>% 
+  #if word_VV_final = TRUE and following_V = TRUE, filter it out 
+  filter(!(word_VV_final & following_V ))  %>% 
+  #determine if sequence occurs in seq of 3 vowels
+mutate(three_vowels = mapply(three_vowels, Target.orthography, Target.vowelCluster)) %>% 
+  #filter out three_vowels = TRUE
+ filter(!(three_vowels)) %>% 
+#filter out instances where seq occurs more than once
+    mutate(VV_occurence = str_count(Target.orthography, Target.vowelCluster)) %>% 
+  filter(VV_occurence < 2)  %>%
+#filter out instances where the sequence is preceded by a long vowel
+  filter(!mapply(function(vowel, word) grepl(paste0(":", vowel), word), 
+                 Target.vowelCluster, Target.orthography))
+
+#remove unnecessary columns
+data_filtered <- data_filtered %>% 
+  select(-word_VV_final, -following_V, -word_VV_initial, -prev_v, -VV_occurence, -three_vowels)
+
+```
+
+5. Save as the selected data as a .csv
+
+```{r}
+write.csv(data_filtered, here("public", "Data", "opening_seqs_selected_data.csv"))
+
+```
+
+# Acoustic measurements and filtering {#sec-measure-filter}
+
+## Formants  (Manuscript §3.3.1)
+The following code extracts praat measurements for the formants, and 
+requires a LaBB-CAT account.  Chunks are set not to evaluate, measurements can be read in from provided csvs below. 
+
+### Sequences formant measurments
+
+1. Define URL + intervals, separate data by sequence 
+
+```{r}
+url <- "https://labbcat.canterbury.ac.nz/maonze/"
+intervals <- c(.1,.2,.3,.4, .5, .6, .7, .8, .9)
+
+ia = data_filtered %>% filter(Target.vowelCluster == "ia")  
+ua = data_filtered %>% filter(Target.vowelCluster == "ua") 
+oa = data_filtered %>% filter(Target.vowelCluster == "oa") 
+ea = data_filtered %>% filter(Target.vowelCluster == "ea") 
+
+```
+
+2. /ia/ formant measurements
+
+```{r, eval=FALSE}
+iaformants <- 
+ia  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.vowelCluster.start,
+    Target.vowelCluster.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = intervals,
+                              formants = c(1, 2)))))
+
+
+write.csv(iaformants, here("public", "Data", "iaFormantsRaw.csv"))
+```   
+
+3. /ea/ formant measurements
+```{r, eval=FALSE}
+eaformants <- ea  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.vowelCluster.start,
+    Target.vowelCluster.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = intervals,
+                              formants = c(1, 2)))))
+
+write.csv(eaformants, here("public", "Data", "eaFormantsRaw.csv"))
+```
+
+4. /oa/ formant measurements
+```{r, eval=FALSE}
+oaformants <- 
+oa  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.vowelCluster.start,
+    Target.vowelCluster.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = intervals,
+                              formants = c(1, 2)))))
+
+write.csv(oaformants, here("public", "Data", "oaFormantsRaw.csv"))
+```  
+
+5. /ua/  formant measurements
+```{r, eval=FALSE}
+uaformants <- 
+ua  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.vowelCluster.start,
+    Target.vowelCluster.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = intervals,
+                              formants = c(1, 2)))))
+
+write.csv(uaformants, here("public", "Data","uaFormantsRaw.csv"))
+
+```
+
+6. Read in data if need be
+```{r}
+eaformants <- read.csv(here("public", "Data", "eaFormantsRaw.csv"))
+iaformants <- read.csv(here("public", "Data", "iaFormantsRaw.csv"))
+oaformants <- read.csv(here("public", "Data", "oaFormantsRaw.csv"))
+uaformants <- read.csv(here("public", "Data", "uaFormantsRaw.csv"))
+
+```
+
+7. Combine  into a single data frame
+```{r}
+
+allseqformants = rbind(eaformants,iaformants,oaformants,uaformants)
+```
+
+8. Make separate data frames for F1 and F2, pivot longer
+
+```{r}
+  allf1 =  allseqformants %>% pivot_longer(c(f1_time_0_1,f1_time_0_2,f1_time_0_3,
+                 f1_time_0_4,f1_time_0_5,f1_time_0_6,
+                 f1_time_0_7,f1_time_0_8,f1_time_0_9),
+               names_to = "f1time",
+               values_to = "f1") 
+  allf2 =  allseqformants %>% pivot_longer(c(f2_time_0_1,f2_time_0_2,f2_time_0_3,
+                 f2_time_0_4,f2_time_0_5,f2_time_0_6,
+                 f2_time_0_7,f2_time_0_8,f2_time_0_9),
+               names_to = "f2time",
+               values_to = "f2")
+  
+ alllong = allf1 
+ alllong$temptime = allf1$f1time
+ alllong$time = as.numeric(substr(alllong$temptime, 11,11))
+ alllong$f1 = allf1$f1
+ alllong$f2 = allf2$f2
+
+```
+
+9. Remove NAs
+```{r}
+alllong = alllong[is.na(alllong$f1) != TRUE,]
+alllong = alllong[is.na(alllong$f2) != TRUE,]
+alllong$f1 = as.numeric(alllong$f1)
+alllong$f2 = as.numeric(alllong$f2)
+alllong$time = as.numeric(alllong$time)
+```
+
+10. Save data frame
+```{r, eval=FALSE}
+write.csv(alllong, here("public", "Data", "openningseqs_formants_all_long.csv")) 
+```
+
+We will return later to normalize the data. 
+
+
+### Monophthong formant measurements 
+
+The following chunks extract midpoint values for each monophthong
+
+1. /i/ 
+```{r, eval=FALSE}
+monoi = betweenConsonantsMatches %>% filter(Target.teAkaSegment == "i")
+
+monoiformants <- 
+monoi  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.teAkaSegment.start,
+    Target.teAkaSegment.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = 0.5,
+                              formants = c(1, 2)))))
+
+write.csv(monoiformants, here("public", "Data","monoiFormantsRaw.csv"))    
+```
+
+2. /e/ 
+```{r, eval=FALSE}
+monoe = betweenConsonantsMatches %>% filter(Target.teAkaSegment == "e")
+ 
+monoeformants <- 
+monoe  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.teAkaSegment.start,
+    Target.teAkaSegment.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = 0.5,
+                              formants = c(1, 2)))))
+
+write.csv(monoeformants, here("public", "Data","monoeFormantsRaw.csv"))
+    
+```
+
+3. /a/ 
+```{r, eval=FALSE}
+monoa = betweenConsonantsMatches %>% filter(Target.teAkaSegment == "a")
+monoaformants <- 
+monoa  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.teAkaSegment.start,
+    Target.teAkaSegment.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = 0.5,
+                              formants = c(1, 2)))))
+
+write.csv(monoaformants, here("public", "Data","monoaFormantsRaw.csv"))
+```
+
+4. /o/
+```{r, eval=FALSE}
+monoo = betweenConsonantsMatches %>% filter(Target.teAkaSegment == "o")
+
+monooformants <- 
+monoo  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.teAkaSegment.start,
+    Target.teAkaSegment.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = 0.5,
+                              formants = c(1, 2)))))
+
+write.csv(monooformants, here("public", "Data","monooFormantsRaw.csv"))
+```
+
+5. /u/
+```{r, eval=FALSE}
+monou = betweenConsonantsMatches %>% filter(Target.teAkaSegment == "u")
+
+monouformants <- 
+monou  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.teAkaSegment.start,
+    Target.teAkaSegment.end,
+    window.offset=0.025,
+    paste(
+      praatScriptFormants(sample.points = 0.5,
+                              formants = c(1, 2)))))
+
+write.csv(monouformants, here("public", "Data","monouFormantsRaw.csv"))
+    
+```
+
+6. Read in data if need be
+```{r}
+monoiformants = read.csv(here("public", "Data", "monoiFormantsRaw.csv"))
+monoeformants = read.csv(here("public", "Data", "monoeFormantsRaw.csv"))
+monoaformants = read.csv(here("public", "Data", "monoaFormantsRaw.csv"))
+monooformants = read.csv(here("public", "Data", "monooFormantsRaw.csv"))
+monouformants = read.csv(here("public", "Data", "monouFormantsRaw.csv"))
+```
+
+7. Create combined data frame
+```{r}
+monoformants = rbind(monoiformants, monoeformants, monoaformants, monooformants, monouformants)
+
+monoformants2 = monoformants %>% filter(is.na(f1_time_0_5) == FALSE)
+
+```
+
+7. Remove outliers
+
+```{r}
+monoformants2 <- monoformants2 %>% 
+  rename(Speaker = Participant)
+
+monoformants3 = left_join(monoformants2, participant_info, by = "Speaker")
+
+
+prunedmono = monoformants3 %>% group_by(participant_gender, Target.teAkaSegment) %>%
+  filter(f1_time_0_5< mean(f1_time_0_5)+2.5*sd(f1_time_0_5),
+         f1_time_0_5> mean(f1_time_0_5)-2.5*sd(f1_time_0_5),
+         f2_time_0_5< mean(f2_time_0_5)+2.5*sd(f2_time_0_5),
+         f2_time_0_5> mean(f2_time_0_5)-2.5*sd(f2_time_0_5))
+         
+monophthongs = prunedmono
+```
+
+### Normalisation
+
+This section uses  Lobanov 2.0 code, taken from [@Brandetal2021] supplementaries 
+
+1. Standard Lobanov normalisation - calculate means across all vowels per speaker
+```{r, eval=FALSE}
+monophthongs$F1_50 = monophthongs$f1_time_0_5
+monophthongs$F2_50 = monophthongs$f2_time_0_5
+summary_vowels_all_lobanov <- monophthongs %>%
+  group_by(Speaker) %>%
+  dplyr::summarise(mean_F1_lobanov = mean(F1_50),
+            mean_F2_lobanov = mean(F2_50),
+            sd_F1_lobanov = sd(F1_50),
+            sd_F2_lobanov = sd(F2_50),
+            token_count = n())
+
+```
+
+2. Lobanov 2.0 - calculate means per vowel and per speaker
+
+```{r, eval=FALSE}
+summary_vowels_all <- monophthongs %>%
+  group_by(Speaker, Target.teAkaSegment) %>%
+  dplyr::summarise(mean_F1 = mean(F1_50),
+            mean_F2 = mean(F2_50),
+            sd_F1 = sd(F1_50),
+            sd_F2 = sd(F2_50),
+            token_count_vowel = n())
+```
+
+3. Get the mean_of_means and sd_of_means from the the speaker_summaries.  This will give each speaker a mean calculated from the means across all vowels, as well as the standard deviation of the means
+````{r, eval=FALSE}
+summary_mean_of_means <- summary_vowels_all %>%
+  group_by(Speaker) %>%
+  dplyr::summarise(mean_of_means_F1 = mean(mean_F1),
+            mean_of_means_F2 = mean(mean_F2),
+            sd_of_means_F1 = sd(mean_F1),
+            sd_of_means_F2 = sd(mean_F2)
+            )
+````
+
+
+4. Combine these values with the full sequences raw dataset , then use these values to normalise the data with both the Lobanov and the Lobanov 2.0 method
+
+```{r, eval=FALSE}
+pruned = alllong 
+
+sequencesall <- pruned %>%
+  #add in the data
+  left_join(., summary_mean_of_means, by="Speaker") %>%
+  #normalise with Lobanov 2.0
+  mutate(F1_lobanov_2.0 = (f1 - mean_of_means_F1)/sd_of_means_F1,
+         F2_lobanov_2.0 = (f2 - mean_of_means_F2)/sd_of_means_F2) %>%
+  #remove the variables that are not required
+  dplyr::select(-(mean_of_means_F1:sd_of_means_F2))
+
+```
+
+5. Normalize the monophthongs
+```{r,  eval=FALSE}
+monophthongs$f1 = monophthongs$F1_50 
+monophthongs$f2 = monophthongs$F2_50 
+
+monophthongsall <- monophthongs %>%
+  #add in the data
+  left_join(., summary_mean_of_means, by="Speaker") %>%
+  left_join(., summary_vowels_all[, c("Speaker", "Target.teAkaSegment", "token_count_vowel")]) %>%
+  left_join(., summary_vowels_all_lobanov) %>%
+  #normalise the raw F1 and F2 values with Lobanov
+  mutate(F1_lobanov = (f1 - mean_F1_lobanov)/sd_F1_lobanov,
+         F2_lobanov = (f2 - mean_F2_lobanov)/sd_F2_lobanov,
+  #normalise with Lobanov 2.0
+         F1_lobanov_2.0 = (f1 - mean_of_means_F1)/sd_of_means_F1,
+         F2_lobanov_2.0 = (f2 - mean_of_means_F2)/sd_of_means_F2) %>%
+  #remove the variables that are not required
+  dplyr::select(-(mean_of_means_F1:sd_of_means_F2), -(mean_F1_lobanov:sd_F2_lobanov))
+```
+ 
+6. Save the normalised sequences and monophthongs
+
+```{r, eval=FALSE}
+write.csv(sequencesall, here("public", "Data", "openingsequences_normalised_nofilter.csv"))
+write.csv(monophthongsall, here("public", "Data", "monophthongsfinal.csv"))
+```
+
+### Formant trajectory filtering
+This section provides the code to filter the formant trajectories,
+as described in the  §3.3.1 of the manuscript. 
+
+1. Read in normalized sequences data if need be
+```{r, eval=FALSE}
+sequences = read.csv(here("public", "Data", "openingsequences_normalised_nofilter.csv"))
+```
+
+2. Some data prep
+
+```{r, eval=FALSE}
+sequences$participant_gender = as.factor(sequences$participant_gender)
+sequences$category = as.factor(sequences$category)
+sequences$sequence = as.factor(sequences$Target.vowelCluster)
+sequences$stress = as.factor(sequences$stress)
+
+sequences$category_gender = interaction(sequences$participant_gender, sequences$category)
+
+sequences <- sequences %>%
+  mutate(unique_id = paste(MatchId, time)) %>%
+  filter(!duplicated(unique_id))
+```
+
+3. Pivot the data frame
+```{r, eval=FALSE}
+
+vowels <- sequences
+
+
+vowels <- vowels %>%
+  pivot_longer(
+    cols = F1_lobanov_2.0:F2_lobanov_2.0, # Select the columns to turn into rows.
+    names_to = "Formant", # Name the column to indicate if data is F1 or F2,
+    values_to = "Frequency"
+  )
+
+vowels %>%
+  head(100) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+
+```
+
+4. Some more data prep
+
+```{r, eval=FALSE}
+
+vowels$Vowel = vowels$sequence
+
+vowels$word = vowels$Target.word
+
+vowels <- vowels %>%
+  mutate(preceding = str_match(word, "(.*)[eiou]a")[,2] %>%
+           str_extract("(wh|ng|[^:]{0,1}:*)$") %>% 
+           str_remove_all(":") %>%
+           factor(),
+         following = str_match(word, "[eiou]a(.*)")[,2] %>%
+           str_extract("^[-:]*(wh|ng|[^:]{0,1}:*)") %>% 
+           str_remove_all("[-:]") %>%
+           ifelse(.=="", 
+                  After.Match %>%
+                   str_to_lower() %>% 
+                   str_extract("^([<>~?:\"' ]|-)*(wh|ng|.{0,1})") %>%
+                   str_remove("[<>~?:\"' -]+") %>% 
+                   paste0("$", .),
+                 .) %>%
+           factor(),
+         time_left = exp(-(time-1)/1.5),
+         time_right = exp(-(9-time)/1.5),
+         duration = Target.vowelCluster.end - Target.vowelCluster.start,
+         preceding_category_gender = paste(preceding, category_gender) %>% factor(),
+         following_category_gender = paste(following, category_gender) %>% factor(),
+         Speaker_f = factor(Speaker)
+  ) %>%
+  group_by(MatchId) %>%
+  mutate(traj_start=time==min(time)) %>%
+  ungroup()
+
+```
+
+5. Filtering functions 
+```{r, eval=FALSE}
+
+# 1) trajectories that are too far away from everyone else
+
+
+calculate_overall_deviation <- function (id, time, frequency) {
+  #traj_ids <- unique(dat$MatchId)
+  comp <- tibble(id, time, frequency) %>%
+    pivot_wider(id_cols=id,
+                names_from=time,
+                values_from=frequency) %>%
+    select(-id)
+  means <- summarise(comp, across(everything(), ~ median(.x, na.rm=T))) %>%
+    unlist() %>%
+    tibble(time=as.numeric(names(.)),
+           overall_mean=.) %>%
+    arrange(time)
+  #print(means)
+  tibble(id, time, frequency) %>%
+    left_join(means, by="time") %>%
+    group_by(id) %>%
+    mutate(dev = abs(mean(frequency - overall_mean))) %>%
+    ungroup() %>%
+    pull(dev) %>%
+    return()
+}
+
+
+
+# 2) individual data points that represent too much of a jump
+
+calculate_jumpiness <- function (id, time, frequency) {
+  # fit qgam smooth to entire subset
+  m <- qgam(frequency ~ s(time, k=9), tibble(time, frequency), qu=0.5)
+  # extract smoothing parameter
+  smo_pe <- m$sp
+  # fit smooth to each traj with sp
+  tibble(id, frequency, time) %>%
+    group_by(id) %>%
+    mutate(jumpiness = 
+             abs(
+               frequency - predict(
+                gam(frequency ~ s(time,k=length(time),sp=smo_pe))
+                )
+             )
+          ) %>%
+    ungroup() %>%
+    pull(jumpiness) %>%
+    return()
+}
+```
+
+6. Filter all the categories / vowels / formants and make some plots of the filtered data
+
+```{r, eval=FALSE}
+generate_preds <- function (dat, newdat, pred_type) {
+  #cat(dat$Formant[1], dat$category[1], dat$participant_gender[1], "\n")
+  if (pred_type == "gam") {
+    predict(
+      bam(Frequency ~ s(time, k=9),
+          data=dat),
+      newdata=newdat
+    )
+  } else {
+    predict(
+      qgam(Frequency ~ s(time, k=9),
+          data=dat, qu=0.5),
+      newdata=newdat
+    )
+  }
+}
+
+# we iterate through the vowels
+for (v in unique(vowels$Vowel)) {
+  # unfiltered data
+  vdat <- filter(vowels, Vowel==v) %>%
+    mutate(data_type="unfiltered")
+  vdat_filtered <- vdat %>%
+    # we filter separately within formant / category_gender
+    group_by(Formant, category, participant_gender) %>%
+    mutate(jump=calculate_jumpiness(MatchId, time, Frequency)) %>%
+    #### PAR 1 here:
+    # jump criterion = 1, which is in Lobanov space
+    filter(jump < 1) %>%
+    ungroup() %>%
+    # we remove trajectories with 3 or fewer data points
+    group_by(MatchId) %>%
+    filter(n() > 3) %>%
+    ungroup() %>%
+    # we remove trajectories that are too far away from their
+    # vowel / formant / category_gender group
+    group_by(Formant, category, participant_gender) %>%
+    mutate(dev=calculate_overall_deviation(MatchId, time, Frequency)) %>%
+    #### PAR 2 here:
+    # deviation criterion = 1.5, which is in Lobanov space
+    filter(dev < 1.5) %>%
+    ungroup() %>%
+    mutate(data_type="filtered")
+  vdat_all <- bind_rows(vdat, vdat_filtered)
+  # generate gam / qgam models for filtered / unfiltered data
+  vdat_all_gam <- vdat_all %>%  
+    group_by(data_type, Formant, category, participant_gender) %>%
+    nest() %>%
+    mutate(pred=
+             map(
+               data,
+               ~ tibble(time=1:9) %>%
+                 mutate(Frequency =
+                   generate_preds(
+                     .x,
+                     .,
+                     pred_type="gam"
+                   )
+                 )
+             )
+    )
+  vdat_all_qgam <- vdat_all %>%  
+    group_by(data_type, Formant, category, participant_gender) %>%
+    nest() %>%
+    mutate(pred=
+             map(
+               data,
+               ~ tibble(time=1:9) %>%
+                 mutate(Frequency =
+                   generate_preds(
+                     .x,
+                     .,
+                     pred_type="qgam"
+                   )
+                 )
+             )
+    )
+  v_gam_preds <- bind_rows(
+    vdat_all_gam %>%
+      select(-data) %>%
+      unnest() %>%
+      mutate(pred_type="gam"),
+    vdat_all_qgam %>%
+      select(-data) %>%
+      unnest() %>%
+      mutate(pred_type="qgam"),
+  )
+ pdf(here::here("Figures", "FilteredData", "Formants", paste0(v, ".pdf")), onefile = TRUE)
+  for (f in unique(vdat_all$Formant)) {
+    for (g in unique(vdat_all$participant_gender)) {
+      gp <- ggplot(filter(vdat_all, Formant==f, participant_gender==g),
+             aes(x=time, y=Frequency)) +
+        facet_grid(category ~ data_type) +
+        geom_line(aes(group=MatchId), col="black", lwd=0.1, alpha=0.2) +
+        geom_line(data=filter(v_gam_preds, Formant==f, participant_gender==g),
+                  aes(col=pred_type), lwd=1) +
+        scale_colour_manual(values=c("blue","red")) +
+        ggtitle(paste(f, g)) +
+  theme(legend.position = "none")
+      print(gp)
+    }
+  }
+     #write csv of filtered data
+  for (f in unique(vdat_filtered$Formant)) {
+    file_name <- here("Filtered", "Formants", paste0(f, ".csv"))
+    write.csv(vdat_filtered, file = file_name, row.names = FALSE)
+  }
+  
+  
+  dev.off()
+}
+```
+
+7. Combine filtered formants data
+
+```{r, eval= FALSE}
+formants_filtered_ea <- read.csv(here("public", "Data", "Filtered", "Formants", "ea.csv"))
+formants_filtered_ia <- read.csv(here("public", "Data", "Filtered", "Formants", "ia.csv"))
+formants_filtered_oa <- read.csv(here("public", "Data", "Filtered", "Formants", "oa.csv"))
+formants_filtered_ua <- read.csv(here("public", "Data", "Filtered", "Formants", "ua.csv"))
+
+formants_filtered_all  <- rbind(formants_filtered_ea, formants_filtered_ia, formants_filtered_oa, formants_filtered_ua)
+
+write.csv(formants_filtered_all, here("public", "Data", "formants_filtered_all.csv"))
+
+```
+
+## Pitch and Intensity (Manuscript §3.3.2) 
+
+The following code extracts praat measurements for pitch and intensity. As for the formant measurements, it
+requires a LaBB-CAT account.  Chunks are set not to evaluate, measurements can be read in from provided csvs below. 
+
+### Measurements
+
+1. Define URL + intervals, separate data by sequence 
+
+```{r, eval=FALSE}
+url <- "https://labbcat.canterbury.ac.nz/maonze/"
+intervals <- c(.2,.3,.4, .5, .6, .7, .8)
+
+ia = data_filtered %>% filter(Target.vowelCluster == "ia")  
+ua = data_filtered %>% filter(Target.vowelCluster == "ua") 
+oa = data_filtered %>% filter(Target.vowelCluster == "oa") 
+ea = data_filtered %>% filter(Target.vowelCluster == "ea") 
+```
+
+2. /ia/ pitch and intensity measurements 
+
+```{r, eval=FALSE}
+iapitch <- ia  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.vowelCluster.start,
+    Target.vowelCluster.end,
+    window.offset=0.025,
+  paste(
+      praatScriptPitch(gender.attribute = "participant_gender",
+        value.for.male = "M",
+         pitch.floor.male = 30,
+        sample.points = intervals,
+                           get.mean=TRUE),
+      praatScriptIntensity(sample.points = intervals)))) %>%
+  rename()
+
+write.csv(iapitch, here("public", "Data", "iaPitchIntRaw.csv"))
+```  
+
+3. /ea/ pitch and intensity measurements 
+
+```{r, eval=FALSE}
+eapitch <- 
+ea  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.vowelCluster.start,
+    Target.vowelCluster.end,
+    window.offset=0.025,
+  paste(
+      praatScriptPitch(gender.attribute = "participant_gender",
+        value.for.male = "M",
+        pitch.floor.male = 30,
+      sample.points = intervals,
+                           get.mean=TRUE,),
+      praatScriptIntensity(sample.points = intervals
+                           )))) %>%
+  rename()
+    
+write.csv(eapitch, here("public", "Data", "eaPitchIntRaw.csv"))
+```
+
+4. /oa/ pitch and intensity measurements 
+```{r, eval=FALSE}
+oapitch <-oa  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.vowelCluster.start,
+    Target.vowelCluster.end,
+    window.offset=0.025,
+  paste(
+      praatScriptPitch(gender.attribute = "participant_gender",
+        value.for.male = "M",
+         pitch.floor.male = 30,
+        sample.points = intervals,
+                           get.mean=TRUE),
+      praatScriptIntensity(sample.points = intervals )))) %>%
+  rename()
+  
+write.csv(oapitch, here("public", "Data", "oaPitchIntRaw.csv"))  
+```
+
+5. /ua/ pitch and intensity measurements 
+```{r, eval=FALSE}
+uapitch <- ua  %>%
+    mutate(nzilbb.labbcat::processWithPraat(
+    url,
+    MatchId,
+    Target.vowelCluster.start,
+    Target.vowelCluster.end,
+    window.offset=0.025,
+  paste(
+      praatScriptPitch(gender.attribute = "participant_gender",
+        value.for.male = "M",
+         pitch.floor.male = 30,
+        sample.points = intervals,
+                           get.mean=TRUE),
+      praatScriptIntensity(sample.points = intervals )))) %>%
+  rename()
+  
+write.csv(uapitch, here("public", "Data", "uaPitchIntRaw.csv"))  
+```
+
+6. Read in data if need be
+```{r}
+iapitch <- read.csv(here("public", "Data", "iaPitchIntRaw.csv"))
+eapitch <- read.csv(here("public", "Data", "eaPitchIntRaw.csv"))
+oapitch <- read.csv(here("public", "Data","oaPitchIntRaw.csv"))
+uapitch <- read.csv(here("public", "Data","uaPitchIntRaw.csv"))
+```
+
+7. Create combined  data frame
+```{r}
+
+allpitch = rbind(iapitch,eapitch,oapitch,uapitch)
+```
+
+8. Make separate data frames for pitch and intensity, pivot longer
+```{r}
+allpitch = allpitch %>% mutate_at(c("intensity_time_0_2","intensity_time_0_3","intensity_time_0_4","intensity_time_0_5","intensity_time_0_6","intensity_time_0_7","intensity_time_0_8","pitch_time_0_2","pitch_time_0_3","pitch_time_0_4","pitch_time_0_5","pitch_time_0_6","pitch_time_0_7","pitch_time_0_8"), as.numeric)
+
+  allintenselong =  allpitch %>% pivot_longer(c(intensity_time_0_2,intensity_time_0_3,intensity_time_0_4,intensity_time_0_5,intensity_time_0_6,intensity_time_0_7,intensity_time_0_8), names_to = "intensitytime", values_to = "intensity") 
+
+  allpitchlong =  allpitch %>% pivot_longer(c(pitch_time_0_2,pitch_time_0_3, pitch_time_0_4,pitch_time_0_5,pitch_time_0_6,pitch_time_0_7,pitch_time_0_8),
+               names_to = "pitchtime",
+               values_to = "pitch")
+  
+ pitchintenselong = allpitchlong[,c("MatchId", "sequence", "Speaker", "participant_gender", "category", "pitchtime", "pitch", "complex")]
+ pitchintenselong$temptime =  pitchintenselong$pitchtime
+ pitchintenselong$time = as.numeric(substr( pitchintenselong$temptime, 14,14))
+ pitchintenselong$pitch = allpitchlong$pitch
+pitchintenselong$intensity = allintenselong$intensity
+ 
+```
+
+9. Remove NAs
+```{r}
+pitchintenselong <- pitchintenselong %>% 
+    drop_na(pitch)  
+
+pitchintenselong <- pitchintenselong %>% 
+    drop_na(intensity)
+  
+```
+ 
+10. Write csv for long, uncentered data (not strictly necessary, but good to have)
+
+```{r}
+
+write.csv(pitchintenselong, here("public", "Data", "pitchlongall_uncentered.csv"))
+
+
+```
+
+11. Split up  pitch and intensity 
+
+```{r}
+ int <- pitchintenselong %>% 
+   select(-pitch)
+
+
+ pitch <- pitchintenselong %>% 
+   select(-intensity)
+
+```
+
+
+12. Centre data within speaker, save .csvs 
+
+```{r}
+pitch <- pitch %>% group_by(Speaker) %>%
+    mutate(c_pitch = scale(pitch, center=TRUE, scale=FALSE))
+
+
+int <- int %>% group_by(Speaker) %>%
+  mutate(c_intensity = scale(intensity, center=TRUE, scale=FALSE))
+
+
+write.csv(pitch, here("public", "Data", "pitch_centered_per_speaker_nofilter.csv"))
+
+write.csv(int, here("public", "Data", "intcentered_per_speaker.csv"))
+
+ 
+```
+
+
+## Pitch and Intensity filtering
+
+This section provides the code to filter the pitch and intensity trajectories,
+as described in §3.3.2 of the manuscript. 
+
+1. Read in data
+
+```{r, eval=FALSE}
+pitch <- read.csv(here("public", "Data","pitch_centered_per_speaker_nofilter.csv"))
+int <- read.csv(here("public", "Data","intcentered_per_speaker.csv"))
+
+sequences <- read.csv(here("public", "Data", "opening_seqs_selected_data.csv"))
+
+```
+
+2. Some data prep
+
+```{r, eval=FALSE}
+sequences$category_gender = interaction(sequences$participant_gender, sequences$category)
+
+
+sequences_info <- sequences %>% 
+  select(MatchId,  Speaker, Target.word, After.Match, category, participant_gender, category_gender, Target.vowelCluster.end, Target.vowelCluster.start) %>% 
+  unique()
+```
+
+3. Manually filter out pitch measurement errors
+```{r, eval=FALSE}
+pitch <- pitch %>% 
+ rename(raw_pitch = pitch)
+
+filtered_women <- pitch %>% 
+  filter(participant_gender == "F") %>% 
+ filter(raw_pitch >=  70 & raw_pitch <=  460)  
+
+
+filtered_men <- pitch %>% 
+  filter(participant_gender == "M") %>% 
+  filter(raw_pitch >=  60 & raw_pitch <= 230) 
+
+ 
+ pitch_filtered <- rbind(filtered_women, filtered_men) 
+
+```
+
+4. Some more data prep
+```{r, eval=FALSE}
+
+pitch = pitch_filtered %>%
+   dplyr::select(sequence,MatchId,
+                 time,
+                 pitch=c_pitch) 
+
+int = int %>%
+   dplyr::select(sequence,MatchId,
+                 time,
+                  intensity=c_intensity)
+
+
+pitch <- left_join(pitch, sequences_info)
+
+int <- left_join(int, sequences_info)
+
+
+pitch <- pitch %>%
+  mutate(unique_id = paste(MatchId, time)) %>%
+  filter(!duplicated(unique_id)) %>% 
+  drop_na()
+
+
+int <- int %>%
+  mutate(unique_id = paste(MatchId, time)) %>%
+  filter(!duplicated(unique_id)) %>% 
+  drop_na()
+
+
+pitch$participant_gender = as.factor(pitch$participant_gender)
+pitch$category = as.factor(pitch$category)
+pitch$sequence = as.factor(pitch$sequence)
+pitch$MatchId = as.factor(pitch$MatchId)
+
+int$participant_gender = as.factor(int$participant_gender)
+int$category = as.factor(int$category)
+int$sequence = as.factor(int$sequence)
+int$MatchId = as.factor(int$MatchId)
+
+```
+### Pitch trajectory filtering 
+
+1. Pivot the data frame
+```{r, eval=FALSE}
+
+vowels <- pitch %>%
+  pivot_longer(
+    cols = pitch, # Select the columns to turn into rows.
+    names_to = "MeasureType", # Name the column to indicate if data is pitch or intensity
+    values_to = "Measure"
+  )
+
+
+is.numeric(vowels$Measure)
+
+
+
+vowels %>%
+  head(100) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+
+```
+
+2. Some more data prep
+```{r,  eval=FALSE}
+
+vowels$Vowel = vowels$sequence
+
+vowels$word = vowels$Target.word
+
+vowels <- vowels %>%
+  mutate(preceding = str_match(word, "(.*)[eiou]a")[,2] %>%
+           str_extract("(wh|ng|[^:]{0,1}:*)$") %>% 
+           str_remove_all(":") %>%
+           factor(),
+         following = str_match(word, "[eiou]a(.*)")[,2] %>%
+           str_extract("^[-:]*(wh|ng|[^:]{0,1}:*)") %>% 
+           str_remove_all("[-:]") %>%
+           ifelse(.=="", 
+                  After.Match %>%
+                   str_to_lower() %>% 
+                   str_extract("^([<>~?:\"' ]|-)*(wh|ng|.{0,1})") %>%
+                   str_remove("[<>~?:\"' -]+") %>% 
+                   paste0("$", .),
+                 .) %>%
+           factor(),
+         time_left = exp(-(time-1)/1.5),
+         time_right = exp(-(9-time)/1.5),
+         duration = Target.vowelCluster.end - Target.vowelCluster.start,
+         preceding_category_gender = paste(preceding, category_gender) %>% factor(),
+         following_category_gender = paste(following, category_gender) %>% factor(),
+         Speaker_f = factor(Speaker)
+  ) %>%
+  group_by(MatchId) %>%
+  mutate(traj_start=time==min(time)) %>%
+  ungroup()
+
+vowels <- vowels %>% 
+  drop_na()
+```
+
+
+3. Filtering functions
+```{r, eval=FALSE}
+
+# 1) trajectories that are too far away from everyone else
+
+calculate_overall_deviation <- function (id, time, Measure) {
+  #traj_ids <- unique(dat$MatchId)
+  comp <- tibble(id, time, Measure) %>%
+    pivot_wider(id_cols=id,
+                names_from=time,
+                values_from=Measure) %>%
+    select(-id)
+  means <- summarise(comp, across(everything(), ~ median(.x, na.rm=T))) %>%
+    unlist()
+  tibble(id, time, Measure) %>%
+    group_by(id) %>%
+    mutate(dev = abs(mean(Measure - means[time]))) %>%
+    ungroup() %>%
+    pull(dev) %>%
+    return()
+}
+
+# 2) individual data points that represent too much of a jump
+
+calculate_jumpiness <- function (id, time, Measure) {
+  # fit qgam smooth to entire subset
+  m <- qgam(Measure ~ s(time, k=4), tibble(time, Measure), qu=0.5)
+  # extract smoothing parameter
+  smo_pe <- m$sp
+  # fit smooth to each traj with sp
+  tibble(id, Measure, time) %>%
+    group_by(id) %>%
+    mutate(jumpiness = 
+             abs(
+               Measure - predict(
+                gam(Measure ~ s(time,k=length(time),sp=smo_pe))
+                )
+             )
+          ) %>%
+    ungroup() %>%
+    pull(jumpiness) %>%
+    return()
+}
+```
+
+
+ 
+4. Filter pitch trajectories for all the categories and vowels,  and make some plots of the filtered data
+```{r, eval = FALSE}
+generate_preds <- function (dat, newdat, pred_type) {
+  #cat(dat$Formant[1], dat$category[1], dat$participant_gender[1], "\n")
+  if (pred_type == "gam") {
+    predict(
+      bam(Measure ~ s(time, k=5),
+          data=dat),
+      newdata=newdat
+    )
+  } else {
+    predict(
+      qgam(Measure ~ s(time, k=5),
+          data=dat, qu=0.5),
+      newdata=newdat
+    )
+  }
+}
+
+# we iterate through the vowels
+for (v in unique(vowels$Vowel)) {
+  # unfiltered data
+  vdat <- filter(vowels, Vowel==v) %>%
+    mutate(data_type="unfiltered")
+  vdat_filtered <- vdat %>%
+    # we remove trajectories with 3 or fewer data points
+    group_by(MatchId) %>%
+    filter(n() > 3) %>%
+    ungroup() %>%
+    # we filter separately within formant / category_gender
+    group_by(MeasureType, category, participant_gender) %>%
+    mutate(jump=calculate_jumpiness(MatchId, time, Measure)) %>%
+    #### PAR 1 here:
+    # jump criterion  
+    filter(jump < 100) %>%
+    ungroup() %>%
+    mutate(data_type="filtered") 
+  vdat_all <- bind_rows(vdat, vdat_filtered)
+  # generate gam / qgam models for filtered / unfiltered data
+  vdat_all_gam <- vdat_all %>%  
+    group_by(data_type, MeasureType, category, participant_gender) %>%
+    nest() %>%
+    mutate(pred=
+             map(
+               data,
+               ~ tibble(time=2:8) %>%
+                 mutate(Measure =
+                   generate_preds(
+                     .x,
+                     .,
+                     pred_type="gam"
+                   )
+                 )
+             )
+    )
+  vdat_all_qgam <- vdat_all %>%  
+    group_by(data_type, MeasureType, category, participant_gender) %>%
+    nest() %>%
+    mutate(pred=
+             map(
+               data,
+               ~ tibble(time=2:8) %>%
+                 mutate(Measure =
+                   generate_preds(
+                     .x,
+                     .,
+                     pred_type="qgam"
+                   )
+                 )
+             )
+    )
+  v_gam_preds <- bind_rows(
+    vdat_all_gam %>%
+      select(-data) %>%
+      unnest() %>%
+      mutate(pred_type="gam"),
+    vdat_all_qgam %>%
+      select(-data) %>%
+      unnest() %>%
+      mutate(pred_type="qgam"),
+  )
+ pdf(here::here("Figures", "FilteredData", "Pitch", paste0(v, ".pdf")), onefile = TRUE)
+  for (f in unique(vdat_all$MeasureType)) {
+    for (g in unique(vdat_all$participant_gender)) {
+      gp <- ggplot(filter(vdat_all, MeasureType==f, participant_gender==g),
+             aes(x=time, y=Measure)) +
+        facet_grid(category ~ data_type) +
+        geom_line(aes(group=MatchId), col="black", lwd=0.1, alpha=0.2) +
+        geom_line(data=filter(v_gam_preds, MeasureType==f, participant_gender==g),
+                  aes(col=pred_type), lwd=1) +
+        scale_colour_manual(values=c("blue","red")) +
+        ggtitle(paste(f, g))
+      print(gp)
+    }
+  }
+     #write csv of filtered data
+  for (f in unique(vdat_filtered$Measure)) {
+    file_name <- here("Filtered", "Pitch", paste0(v, ".csv"))
+    write.csv(vdat_filtered, file = file_name, row.names = FALSE)
+  }
+  
+  dev.off()
+}
+```
+
+### Intensity trajectory filtering
+1. Pivot the data
+```{r, eval= FALSE}
+vowels <- int %>%
+  pivot_longer(
+    cols = intensity, # Select the columns to turn into rows.
+    names_to = "MeasureType", # Name the column to indicate if data is pitch or intensity
+    values_to = "Measure"
+  )
+
+
+is.numeric(vowels$Measure)
+
+
+
+vowels %>%
+  head(100) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+
+```
+
+2. Some more data prep 
+```{r, eval=FALSE}
+
+vowels$Vowel = vowels$sequence
+
+vowels$word = vowels$Target.word
+
+vowels <- vowels %>%
+  mutate(preceding = str_match(word, "(.*)[eiou]a")[,2] %>%
+           str_extract("(wh|ng|[^:]{0,1}:*)$") %>% 
+           str_remove_all(":") %>%
+           factor(),
+         following = str_match(word, "[eiou]a(.*)")[,2] %>%
+           str_extract("^[-:]*(wh|ng|[^:]{0,1}:*)") %>% 
+           str_remove_all("[-:]") %>%
+           ifelse(.=="", 
+                  After.Match %>%
+                   str_to_lower() %>% 
+                   str_extract("^([<>~?:\"' ]|-)*(wh|ng|.{0,1})") %>%
+                   str_remove("[<>~?:\"' -]+") %>% 
+                   paste0("$", .),
+                 .) %>%
+           factor(),
+         time_left = exp(-(time-1)/1.5),
+         time_right = exp(-(9-time)/1.5),
+         duration = Target.vowelCluster.end - Target.vowelCluster.start,
+         preceding_category_gender = paste(preceding, category_gender) %>% factor(),
+         following_category_gender = paste(following, category_gender) %>% factor(),
+         Speaker_f = factor(Speaker)
+  ) %>%
+  group_by(MatchId) %>%
+  mutate(traj_start=time==min(time)) %>%
+  ungroup()
+
+
+vowels <- vowels %>% 
+  drop_na()
+ 
+```
+
+3. Filtering functions
+```{r, eval=FALSE}
+
+# 1) trajectories that are too far away from everyone else
+
+calculate_overall_deviation <- function (id, time, Measure) {
+  #traj_ids <- unique(dat$MatchId)
+  comp <- tibble(id, time, Measure) %>%
+    pivot_wider(id_cols=id,
+                names_from=time,
+                values_from=Measure) %>%
+    select(-id)
+  means <- summarise(comp, across(everything(), ~ median(.x, na.rm=T))) %>%
+    unlist() %>%
+    tibble(time=as.numeric(names(.)),
+           overall_mean=.) %>%
+    arrange(time)
+  #print(means)
+  tibble(id, time, Measure) %>%
+    left_join(means, by="time") %>%
+    group_by(id) %>%
+    mutate(dev = abs(mean(Measure - overall_mean))) %>%
+    ungroup() %>%
+    pull(dev) %>%
+    return()
+}
+
+# 2) individual data points that represent too much of a jump
+
+
+calculate_jumpiness <- function (id, time, Measure) {
+  # fit qgam smooth to entire subset
+  m <- qgam(Measure ~ s(time, k=4), tibble(time, Measure), qu=0.5)
+  # extract smoothing parameter
+  smo_pe <- m$sp
+  # fit smooth to each traj with sp
+  tibble(id, Measure, time) %>%
+    group_by(id) %>%
+    mutate(jumpiness = 
+             abs(
+               Measure - predict(
+                gam(Measure ~ s(time,k=length(time),sp=smo_pe))
+                )
+             )
+          ) %>%
+    ungroup() %>%
+    pull(jumpiness) %>%
+    return()
+}
+```
+
+
+4. Filter intensity trajectories for all the categories and vowels,  and make some plots of the filtered data
+```{r, eval = FALSE}
+generate_preds <- function (dat, newdat, pred_type) {
+  #cat(dat$Formant[1], dat$category[1], dat$participant_gender[1], "\n")
+  if (pred_type == "gam") {
+    predict(
+      bam(Measure ~ s(time, k=6),
+          data=dat),
+      newdata=newdat
+    )
+  } else {
+    predict(
+      qgam(Measure ~ s(time, k=6),
+          data=dat, qu=0.5),
+      newdata=newdat
+    )
+  }
+}
+
+# we iterate through the vowels
+for (v in unique(vowels$Vowel)) {
+  # unfiltered data
+  vdat <- filter(vowels, Vowel==v) %>%
+    mutate(data_type="unfiltered")
+  vdat_filtered <- vdat %>%
+     # we remove trajectories with 3 or fewer data points
+    group_by(MatchId) %>%
+    filter(n() > 3) %>%
+    ungroup() %>%
+    # we filter separately within formant / category_gender
+    group_by(MeasureType, category, participant_gender) %>%
+  mutate(jump=calculate_jumpiness(MatchId, time, Measure)) %>%
+    #### PAR 1 here:
+    # jump criterion =  
+    filter(jump < 15) %>%
+    ungroup() %>%
+    # we remove trajectories that are too far away from their
+    # vowel / formant / category_gender group
+   group_by(MeasureType, category, participant_gender) %>%
+    mutate(dev=calculate_overall_deviation(MatchId, time, Measure)) %>%
+    #### PAR 2 here:
+   #  deviation criterion = 
+    filter(dev < 15) %>%
+   ungroup() %>%
+    mutate(data_type="filtered")
+  vdat_all <- bind_rows(vdat, vdat_filtered)
+  # generate gam / qgam models for filtered / unfiltered data
+  vdat_all_gam <- vdat_all %>%  
+    group_by(data_type, MeasureType, category, participant_gender) %>%
+    nest() %>%
+    mutate(pred=
+             map(
+               data,
+               ~ tibble(time=2:8) %>%
+                 mutate(Measure =
+                   generate_preds(
+                     .x,
+                     .,
+                     pred_type="gam"
+                   )
+                 )
+             )
+    )
+  vdat_all_qgam <- vdat_all %>%  
+    group_by(data_type, MeasureType, category, participant_gender) %>%
+    nest() %>%
+    mutate(pred=
+             map(
+               data,
+               ~ tibble(time=2:8) %>%
+                 mutate(Measure =
+                   generate_preds(
+                     .x,
+                     .,
+                     pred_type="qgam"
+                   )
+                 )
+             )
+    )
+  v_gam_preds <- bind_rows(
+    vdat_all_gam %>%
+      select(-data) %>%
+      unnest() %>%
+      mutate(pred_type="gam"),
+    vdat_all_qgam %>%
+      select(-data) %>%
+      unnest() %>%
+      mutate(pred_type="qgam"),
+  )
+  pdf(here::here("Figures", "FilteredData", "Int", paste0(v, ".pdf")), onefile = TRUE)
+  for (f in unique(vdat_all$MeasureType)) {
+    for (g in unique(vdat_all$participant_gender)) {
+      gp <- ggplot(filter(vdat_all, MeasureType==f, participant_gender==g),
+             aes(x=time, y=Measure)) +
+        facet_grid(category ~ data_type) +
+        geom_line(aes(group=MatchId), col="black", lwd=0.1, alpha=0.2) +
+        geom_line(data=filter(v_gam_preds, MeasureType==f, participant_gender==g),
+                  aes(col=pred_type), lwd=1) +
+        scale_colour_manual(values=c("blue","red")) +
+        ggtitle(paste(f, g))
+      print(gp)
+    }
+  }
+     #write csv of filtered data
+  for (f in unique(vdat_filtered$Measure)) {
+    file_name <- here("Filtered", "Int", paste0(v, ".csv"))
+    write.csv(vdat_filtered, file = file_name, row.names = FALSE)
+  }
+  
+  dev.off()
+}
+```
+
+### Combine filtered data
+1. Read data in if need be
+```{r, eval=FALSE}
+pitch_filtered_ea <- read.csv(here("public", "Data", "Filtered", "Pitch", "ea.csv"))
+pitch_filtered_ia <- read.csv(here("public", "Data", "Filtered", "Pitch", "ia.csv"))
+pitch_filtered_oa <- read.csv(here("public", "Data", "Filtered", "Pitch", "oa.csv"))
+pitch_filtered_ua <- read.csv(here("public", "Data", "Filtered", "Pitch", "ua.csv"))
+
+int_filtered_ea <- read.csv(here("public", "Data", "Filtered", "Int", "ea.csv"))
+int_filtered_ia <- read.csv(here("public", "Data", "Filtered", "Int", "ia.csv"))
+int_filtered_oa <- read.csv(here("public", "Data", "Filtered", "Int", "oa.csv"))
+int_filtered_ua <- read.csv(here("public", "Data", "Filtered", "Int", "ua.csv"))
+
+
+```
+
+
+
+2. Create combined data frames
+
+```{r, eval= FALSE }
+pitch_filtered_all  <- rbind(pitch_filtered_ea, pitch_filtered_ia, pitch_filtered_oa, pitch_filtered_ua)
+
+int_filtered_all  <- rbind(int_filtered_ea, int_filtered_ia, int_filtered_oa, int_filtered_ua)
+
+
+
+```
+
+3. Write .csvs of filtered data
+```{r, eval=FALSE}
+write.csv(pitch_filtered_all, here("public", "Data", "pitch_filtered.csv"))
+write.csv(int_filtered_all, here("public", "Data", "int_filtered.csv"))
+
+```
+
+
+
+# fPCA {#sec-fCPA}
+
+1. Load data files (if need be), rename various columns 
+
+```{r}
+
+formants_filtered <- read_csv(here("public", "Data", "formants_filtered_all.csv")) %>% 
+  dplyr::select(Vowel, MatchId, time, Formant, Frequency)
+
+formants_wide <- formants_filtered %>% 
+  pivot_wider(
+    names_from = Formant,
+    values_from = Frequency
+  )  
+
+
+formants_wide <- formants_wide %>% 
+  rename(sequence = Vowel,
+        form_time = time,
+        f1=F1_lobanov_2.0,f2=F2_lobanov_2.0)
+
+int_filtered <- read.csv(here("public", "Data", "int_filtered.csv")) %>% 
+  dplyr::select(Vowel, MatchId, time, Measure) %>% 
+  rename(intensity = Measure,
+         sequence = Vowel) 
+ 
+
+
+pitch_filtered <- read.csv(here("public", "Data", "pitch_filtered.csv")) %>% 
+dplyr::select(Vowel, MatchId, time, Measure) %>% 
+  rename(sequence = Vowel,
+        pitch = Measure) 
+
+pitch_intensity_data = left_join(int_filtered, pitch_filtered) %>% 
+  rename(pitch_time = time)
+
+
+```
+2. Define function for doing FPCAs for formants. This function performs fPCA for F1 and F2 separately, but does both at the same time for each sequence 
+
+```{r}
+
+PerformFPCA_Forms = function(diphthong,data_set){
+  
+  ## Get temporary working data set
+  data_temp = get(data_set) %>% 
+    dplyr::filter(sequence == diphthong)
+  
+  ## create FPCA inputs for each formant
+  input_1 = MakeFPCAInputs(IDs=data_temp$MatchId,
+                           tVec=data_temp$form_time,
+                           yVec=data_temp$f1)
+  input_2 = MakeFPCAInputs(IDs=data_temp$MatchId,
+                           tVec=data_temp$form_time,
+                           yVec=data_temp$f2)
+  
+  ## perform FPCA on inputs
+  fpca_1 = FPCA(input_1$Ly, input_1$Lt )#optns=list(nRegGrid=9) #this specifies no of time points required   
+  fpca_2 = FPCA(input_2$Ly, input_2$Lt) #optns=list(nRegGrid=9)
+  
+  ## create data frame to return
+  data_return = data.frame(MatchId = unlist(matrix(input_1$Lid)),
+                           sequence = diphthong,
+                           f1_pc1 = fpca_1$xiEst[,1],
+                           f1_pc2 = fpca_1$xiEst[,2],
+                           f1_pc3 = fpca_1$xiEst[,3],
+                           f2_pc1 = fpca_2$xiEst[,1],
+                           f2_pc2 = fpca_2$xiEst[,2],
+                           f2_pc3 = fpca_2$xiEst[,3])
+
+  # create global variables as a list of two FPCA objects
+  fpca_varname = paste("form_fpca_",diphthong,sep="")
+  assign(fpca_varname,list(fpca_1,fpca_2),envir=.GlobalEnv)
+  
+  return(data_return)
+}
+
+```
+
+3. Run function fPCA for formants, then bind all the frames together
+
+Note: when running, this warning comes up: 
+!-- In CheckData(Ly, Lt) : --
+!--   There is a time gap of at least 10% of the observed range across subjects --
+
+Which can be ignored, it just likes more "finely-grained" time series
+
+```{r}
+
+formants_data <- unique(formants_wide) %>% 
+  drop_na()
+
+form_dataname = "formants_data"
+
+
+  
+data_form_ea = PerformFPCA_Forms("ea",form_dataname)
+data_form_ia = PerformFPCA_Forms("ia",form_dataname)
+data_form_oa = PerformFPCA_Forms("oa",form_dataname)
+data_form_ua = PerformFPCA_Forms("ua",form_dataname)
+
+merged_form = bind_rows(list(data_form_ea,data_form_ia,data_form_oa,data_form_ua))
+
+ 
+```
+4. Function for performing fPCA for pitch and intensity
+
+```{r}
+PerformFPCA_Pitch = function(diphthong,data_set){
+  
+  ## get temporary working data set
+  data_temp = get(data_set) %>% 
+    dplyr::filter(sequence == diphthong)
+  
+  ## create inputs for each formant
+  input_1 = MakeFPCAInputs(IDs=data_temp$MatchId,
+                           tVec=data_temp$pitch_time,
+                           yVec=data_temp$pitch)
+  input_2 = MakeFPCAInputs(IDs=data_temp$MatchId,
+                           tVec=data_temp$pitch_time,
+                           yVec=data_temp$intensity)
+  
+  ## perform FPCA on inputs
+  fpca_1 = FPCA(input_1$Ly, input_1$Lt) #, optns=list(nRegGrid=7) 
+  fpca_2 = FPCA(input_2$Ly, input_2$Lt) #optns=list(nRegGrid=7)
+
+  ## create data frame to return
+  data_return = data.frame(MatchId = unlist(matrix(input_1$Lid)),
+                           sequence = diphthong,
+                           pitch_pc1 = fpca_1$xiEst[,1],
+                           pitch_pc2 = fpca_1$xiEst[,2],
+                           pitch_pc3 = fpca_1$xiEst[,3],
+                           intensity_pc1 = fpca_2$xiEst[,1],
+                           intensity_pc2 = fpca_2$xiEst[,2],
+                           intensity_pc3 = fpca_2$xiEst[,3])
+  
+  ## create global variables as a list of two FPCA objects
+  fpca_varname = paste("pitch_fpca_",diphthong,sep="")
+  assign(fpca_varname,list(fpca_1,fpca_2),envir=.GlobalEnv)
+  
+  return(data_return)
+}
+
+```
+
+5. Run fPCA for pitch and intensity
+
+```{r}
+
+pitch_intensity_data<- unique(pitch_intensity_data) %>% 
+    drop_na()
+
+pint_dataname = "pitch_intensity_data"
+
+data_pitch_ea = PerformFPCA_Pitch("ea",pint_dataname)
+data_pitch_ia = PerformFPCA_Pitch("ia",pint_dataname)
+data_pitch_oa = PerformFPCA_Pitch("oa",pint_dataname)
+data_pitch_ua = PerformFPCA_Pitch("ua",pint_dataname)
+
+merged_pitch = bind_rows(list(data_pitch_ea,data_pitch_ia,data_pitch_oa,data_pitch_ua))
+
+
+```
+
+6.  combine fPCA results into a single data frame and save
+
+```{r}
+
+merged_big = merge(merged_form,merged_pitch,by=c("sequence","MatchId"))
+
+
+write.csv(merged_big, here("public", "Data", "fpca_merged.csv"), row.names = FALSE)
+
+ 
+```
+
+## Plot fPCAs
+
+The following plots show the effect of a given fPC curve when added or subtracted from the mean curve. 
+These curves are weighted by the standard deviation of the scores for said fPC, the same method implemented in [@Gubianetal2015]  and  [@Gubianetal2019].  These plots allow us to  see what  high and low fPC scores correspond to in terms of the shape of the curve. The mean curve is shown as a thick black line, high fPC scores are indicated with a plus <+>  and low fPC scores are indicated with a minus <->.
+
+1. Define function for plotting fPCAs 
+```{r}
+
+## MAIN FUNCTION: Generate a plot given a PC and formant (as integer ID)
+PlotPCs = function(PC,fpca_type,sequence,fpca_name,flip_symbols=0){
+  
+  ## Create a working dataset
+  working_fpca = get(paste(fpca_name,"_fpca_",sequence,sep=""))[[fpca_type]]
+    
+  ## get variables from FPCA output
+  mean_curve = working_fpca$mu
+  PC_curve = working_fpca$phi[,PC]
+  PC_mod = PC_curve * sd(working_fpca$xiEst[,PC])
+  cum_var = working_fpca$cumFVE
+  
+  if (fpca_name == "form"){
+    time_start = 1
+    time_end = 9
+  } else {
+    time_start = 2
+    time_end = 8
+  }
+  
+  ## send to "MorePoints" function, get finer detail curves
+  mean_curve = MorePoints(mean_curve,time_start,time_end)
+  PC_curve = MorePoints(PC_curve,time_start,time_end)
+  PC_mod = MorePoints(PC_mod,time_start,time_end)
+  
+  FPCA_extract = data.frame(mean_curve,PC_curve,PC_mod)
+  
+  # get values for plot title and generate titles
+  plot_cum_var = cum_var[PC]*100
+  plot_PC_var = UnTotal(cum_var,PC)*100
+  
+  if (fpca_name == "form"){
+    if (fpca_type == 1){
+      plot_effect = "F1"
+    } else {
+      plot_effect = "F2"
+    }
+  } else {
+    if (fpca_type == 1){
+      plot_effect = "pitch"
+    } else {
+      plot_effect = "intensity"
+    }
+  }
+  
+  plot_title = sprintf("Effect of fPC%s on %s \n(Var: %.1f%% VarTotal: %.1f%%)",PC,plot_effect, plot_PC_var,plot_cum_var)
+  
+  if (fpca_name == "form"){
+    # if formant, check which formant and adjust limits accordingly
+    if (fpca_type == 1){
+      y_min = -1.5
+      y_max = 3.5 
+    } else {
+      y_min = -2.5
+      y_max = 2.5
+    }
+      
+  } else {
+    # alternatively, if pitch/intensity...
+    if (fpca_type == 1){
+      y_min = -50
+      y_max = 50
+    } else {
+      y_min = -12
+      y_max = 7
+    }
+  }
+  
+  ## change y label to intensity if intensity is being examined
+  if (fpca_name == "pitch" & fpca_type == 2){
+    ylabel = "Normalised Intensity"
+  } else {
+    ylabel = "Normalised Frequency"
+  }
+  
+  
+  ## If "flip_symbols" parameter argument isn't false, flip plus and minus symbols
+  if (flip_symbols == 0){
+    add_symbol = "+"
+    sub_symbol = "-"
+  } else {
+    add_symbol = "-"
+    sub_symbol = "+"
+  }
+  
+  PC_plot = ggplot(FPCA_extract, aes(x = seq(time_start,time_end,by=0.5))) +
+    
+    # plot curves
+    geom_smooth(aes(y=mean_curve),se=FALSE,color="black") +
+    geom_point(aes(y=mean_curve + PC_mod),
+               shape=add_symbol,size=5) +
+    geom_point(aes(y=mean_curve - PC_mod),
+               shape=sub_symbol,size=5) +
+    
+    # format plot
+    labs(x="Timepoint",y=ylabel,
+         title=plot_title) +
+    scale_x_continuous(breaks=seq(time_start,time_end,by=1)) + 
+    theme_bw() + ylim(y_min,y_max) +
+    theme(panel.grid = element_blank(),
+          plot.title = element_text(hjust=0.5,size=12))
+  
+  return(PC_plot)
+}
+
+## SUPPORT FUNCTION: Given a specific curve, predict a finer-detail curve 
+
+MorePoints = function(curve,time_start,time_end){
+  times=time_start:time_end
+  temp_smooth = loess(curve~times)
+  temp_smoother = predict(temp_smooth,seq(time_start,time_end,by=0.5))
+  return(temp_smoother)
+}
+
+## SUPPORT FUNCTION: Return non-cumulative variance contribution
+# ('fdapace.FPCA()' objects contain cumulative variances, not individual PC variance)
+
+UnTotal = function(vec,index){
+  if (index == 1){
+    return(vec[index])
+  } else {
+    new_vec = vec[index] - vec[index - 1]
+    return(new_vec)
+  }
+}
+
+```
+
+2. Create fPCA plots for formants, prints in a 3x2 grid. 
+
+
+```{r}
+sequences = c("ea","ia","oa","ua")
+fpca_type = "form"
+
+for (sequence in sequences){
+  plot_PC1_f1 = PlotPCs(1,1,sequence,fpca_type)
+  plot_PC1_f2 = PlotPCs(1,2,sequence,fpca_type)
+  plot_PC2_f1 = PlotPCs(2,1,sequence,fpca_type)
+  plot_PC2_f2 = PlotPCs(2,2,sequence,fpca_type)
+  plot_PC3_f1 = PlotPCs(3,1,sequence,fpca_type)
+  plot_PC3_f2 = PlotPCs(3,2,sequence,fpca_type)
+  
+  big_plot_title = sprintf("fPC Effects on F1 & F2 for /%s/ ",sequence)
+  PC_plot_big = grid.arrange(plot_PC1_f1,plot_PC2_f1,plot_PC3_f1,
+                             plot_PC1_f2,plot_PC2_f2,plot_PC3_f2,
+                             ncol=3,top = textGrob(big_plot_title))
+  ggsave(here("public", "Figures", "fPCA", paste0("hd_forms_", sequence, ".png")),
+         PC_plot_big,scale=1,width=3600,height=2700,units="px")
+  
+}
+
+# Clear variables for tidiness
+rm(plot_PC1_f1,plot_PC2_f1,plot_PC3_f1,
+   plot_PC1_f2,plot_PC2_f2,plot_PC3_f2,
+   big_plot_title,PC_plot_big)
+
+```
+
+For each sequence and formant, more than 90% of variance observed was explained by at 
+least three fPCs.  As a result, three fPCs have been selected for F1 and F2.
+
+The modifications to the mean F1  and F2 curves by each fPC are similar for each sequence.  For F1 and F2, fPC1 explains the height and general shape of the mean curve.  fPC2 reveals different trends for F1 and F2.  For F1, fPC2 appears to explain the position of the peak: a high fPC2 score for F1 reflects a F1  peak in the middle of the sequence, while a low fPC2 score reflects a  F1 peak later in the sequence. For F2, fPC2 seems to captures how extreme the difference is between  the onset and offset of the sequence. Finally, fPC3 for both F1 and F2 concerns the transition  part of the sequence, in particular whether this has more of a concave or convex shape. For F1, a high fPC3 score reflects a more convex shape, with a central peak, while a low fPC3 score reflects a subtle concave dip in the middle of the sequence.  For F2, high fPC3 scores correspond to a subtle concave dip in the middle of the sequence, while low scores correspond to a subtle peak. 
+
+3. Create fPCA plots for pitch and intensity
+```{r}
+
+sequences = c("ea","ia","oa","ua")
+fpca_type = "pitch"
+
+for (sequence in sequences){
+  plot_PC1_pit = PlotPCs(1,1,sequence,fpca_type)
+  plot_PC1_int = PlotPCs(1,2,sequence,fpca_type)
+  plot_PC2_pit = PlotPCs(2,1,sequence,fpca_type)
+  plot_PC2_int = PlotPCs(2,2,sequence,fpca_type)
+  plot_PC3_pit = PlotPCs(3,1,sequence,fpca_type)
+  plot_PC3_int = PlotPCs(3,2,sequence,fpca_type)
+  
+  big_plot_title = sprintf("fPC Effects on pitch and intensity for /%s/",sequence)
+  PC_plot_big = grid.arrange(plot_PC1_pit,plot_PC2_pit,plot_PC3_pit,
+                             plot_PC1_int,plot_PC2_int,plot_PC3_int,
+                             ncol=3,top = textGrob(big_plot_title))
+ ggsave(here("public", "Figures", "fPCA", paste0("hd_pit-int_", sequence, ".png")),
+       PC_plot_big, scale=1, width=3600, height=2700, units="px")
+}
+
+## Clear variables for tidiness
+rm(plot_PC1_pit,plot_PC2_pit,plot_PC3_pit,
+   plot_PC1_int,plot_PC2_int,plot_PC3_int,
+   big_plot_title,PC_plot_big)
+
+```
+
+For pitch and intensity  at least 90% of the cumulative variance is explained by two fPCs.  
+However, to align with the number of fPCs selected for F1 and F2, and to ensure the threshold is exceeded in every instance, three fPCs
+were also chosen for pitch and intensity.
+
+FPC1 captures overall  differences absolute in pitch and intensity. For pitch, fPC2 captures  the direction of the trajectory. High scores indicate a falling trajectory, while low scores correspond to a rising trajectory.  For intensity, fPC2 captures the shape of the trajectory. A high fPC2 score reflects a steep drop, whereas a low fPC1 score indicates a relatively stable intensity across the sequence.  For  pitch,  fPC3 captures  the extent to which the central part of the curve is convex or concave, with a high score corresponding to a convex curve, and a low score corresponding to a concave curve. 	For intensity,  fPC3  captures the extent to which there is a pronounced peak. A	high  fPC3 score indicates  a more pronounced peak,  while a low score reflects a gradual drop. 
+
+
+# Duration filtering (Manuscript §3.3.3)  {#sec-dur-filter}
+
+Duration filtering occurs at this stage  as we only include duration data for sequences which  have been through the other filtering processes, and this affects the centering. 
+
+1. Read in fPCA data if need be 
+```{r}
+fpcadata = read.csv(here("public", "Data", "fpca_merged.csv"))
+
+duration_data = read.csv(here("public", "Data", "opening_seqs_selected_data.csv")) %>% 
+  unique()
+```
+
+2.  Filter seqs for inclusion in fPCA  
+```{r}
+fpcadata_ids <- fpcadata %>% 
+  select(sequence, MatchId) %>% 
+  unique()
+
+
+duration_data <- left_join(fpcadata_ids, duration_data) %>% 
+  unique()
+```
+
+3. Some data prep 
+```{r}
+
+duration_data <- duration_data %>% 
+  mutate(Speaker = as.factor(Speaker)) %>% 
+   mutate(sequence = as.factor(sequence))
+
+  
+```
+4. Add duration to data frame, convert to ms
+```{r}
+duration_data$duration = duration_data$Target.vowelCluster.end - duration_data$Target.vowelCluster.start
+
+duration_data <- duration_data %>% 
+ drop_na(duration) %>% 
+  mutate(duration_ms = duration * 1000)  
+
+
+```
+
+5. Filter out sequences with duration > 500 ms 
+ 
+```{r} 
+duration_data  <-  duration_data %>%
+ filter(duration_ms < 500) 
+
+duration_data <- duration_data %>% 
+mutate(s_duration = scale(duration, center=TRUE, scale=TRUE))
+
+duration_data = duration_data %>% ungroup()
+duration_data$s_duration = as.numeric(duration_data$s_duration)
+duration = unique(duration_data %>% select(MatchId, s_duration))
+
+```
+
+
+We are now ready to conduct the uPCA!
+
+# uPCA  (Manuscript §4.1 ) {#sec-uCPA} 
+
+1. Prepare data. Combine duration data with fPCA data, and filter out any NA values for duration. 
+
+```{r}
+uPCA_data = left_join(fpcadata, duration, by="MatchId") %>% 
+ filter(! is.na(s_duration))  
+
+```
+
+2. Rename columns so that they appear more neatly in the index loadings
+
+```{r}
+uPCA_data <- uPCA_data %>% 
+  rename(`Duration: z-scored` = s_duration,
+         `F1: fPC1` = f1_pc1,
+         `F1: fPC2` = f1_pc2,
+         `F1: fPC3` = f1_pc3,
+         `F2: fPC1` = f2_pc1,
+         `F2: fPC2` = f2_pc2,
+         `F2: fPC3` = f2_pc3,
+         `Pitch: fPC1` = pitch_pc1,
+         `Pitch: fPC2` = pitch_pc2,
+         `Pitch: fPC3` = pitch_pc3,
+         `Intensity: fPC1` = intensity_pc1,
+         `Intensity: fPC2` = intensity_pc2,
+         `Intensity: fPC3` = intensity_pc3,
+  )
+    
+```
+
+3. Create seperate data frames, one for each sequence 
+```{r}
+ea_data = uPCA_data %>% filter(sequence =="ea") 
+oa_data = uPCA_data %>% filter(sequence =="oa") 
+ia_data = uPCA_data %>% filter(sequence =="ia") 
+ua_data = uPCA_data %>% filter(sequence =="ua") 
+
+```
+
+
+4. Run uPCA for each sequence
+
+``` {r, cache = TRUE}
+set.seed(1)
+
+oa_test <- pca_test(
+  oa_data %>% select(-sequence, -MatchId), 
+  n = 500,
+  variance_confint = 0.95,
+  loadings_confint = 0.9
+)
+
+ia_test <- pca_test(
+  ia_data %>% select(-sequence, -MatchId), 
+  n = 500,
+  variance_confint = 0.95,
+  loadings_confint = 0.9
+)
+
+ua_test <- pca_test(
+  ua_data %>% select(-sequence, -MatchId), 
+  n = 500,
+  variance_confint = 0.95,
+  loadings_confint = 0.9
+)
+
+ea_test <- pca_test(
+  ea_data %>% select(-sequence, -MatchId), 
+  n = 500,
+  variance_confint = 0.95,
+  loadings_confint = 0.9
+)
+```
+
+5. Plot variance explained for each sequence 
+
+/ea/ 
+``` {r}
+plot_variance_explained(ea_test)
+```
+
+/ia/ 
+```{r}
+plot_variance_explained(ia_test)
+```
+
+/oa/
+```{r}
+plot_variance_explained(oa_test)
+```
+
+/ua/ 
+```{r}
+plot_variance_explained(ua_test)
+```
+
+## Exploring which uPCs to interpret
+We plot the index loadings for uPC1-4 for each sequence. The summary is: uPC1 identifies the main variation in our data, no other uPCs have multiple variables sitting above the null distribution, or if they do it is
+fPC1 for intensity or pitch, which capture overall height differences. 
+
+###  Index loadings for /ea/, uPC1-4
+
+
+```{r}
+eapc1_loadings_plot_uf <- plot_loadings(ea_test, pc_no=1, filter_boots = FALSE) + geom_text(label="ea",aes(2,.9), size = 10, colour="black") 
+
+eapc1_loadings_plot_uf 
+
+```
+
+
+``` {r}
+eapc2_loadings_plot_uf <- plot_loadings(ea_test, pc_no=2, filter_boots = FALSE) + geom_text(label="ea",aes(2,.7), size = 10, colour="black") + theme(legend.position = "none")
+eapc2_loadings_plot_uf
+
+```
+
+
+``` {r}
+eapc3_loadings_plot_uf <- plot_loadings(ea_test, pc_no=3, filter_boots = FALSE) + geom_text(label="ea",aes(2,.9), size = 10, colour="black") 
+eapc3_loadings_plot_uf 
+
+```
+
+
+``` {r}
+eapc4_loadings_plot_uf <- plot_loadings(ea_test, pc_no=4, filter_boots = TRUE) + geom_text(label="ea",aes(2,.9), size = 10, colour="black") 
+eapc4_loadings_plot_uf
+
+```
+
+### Index loadings for /ia/, uPC1-4
+
+
+
+```{r} 
+iapc1_loadings_plot_uf <- plot_loadings(ia_test, pc_no=1, filter_boots = FALSE) + geom_text (label="ia",aes(2,.9), size = 10, colour="black") 
+
+iapc1_loadings_plot_uf 
+
+```
+
+
+
+``` {r}
+iapc2_loadings_plot_uf <- plot_loadings(ia_test, pc_no=2, filter_boots = FALSE) + geom_text(label="ia",aes(2,.75), size = 10, colour="black")  
+iapc2_loadings_plot_uf
+```
+
+
+``` {r}
+iapc3_loadings_plot_uf <- plot_loadings(ia_test, pc_no=3, filter_boots = FALSE) + geom_text(label="ia",aes(2,.75), size = 10, colour="black")  
+iapc3_loadings_plot_uf
+```
+
+
+``` {r}
+iapc4_loadings_plot_uf <- plot_loadings(ia_test, pc_no=4, filter_boots = FALSE) + geom_text(label="ia",aes(2,.75), size = 10, colour="black")  
+iapc4_loadings_plot_uf
+```
+
+
+### Index loadings for /oa/,  uPC1-4
+
+```{r}
+oapc1_loadings_plot_uf <- plot_loadings(oa_test, pc_no=1, filter_boots = FALSE) + geom_text(label="oa",aes(2,.8), size = 10, colour = "black") 
+
+oapc1_loadings_plot_uf 
+```
+
+
+``` {r}
+oapc2_loadings_plot_uf <- plot_loadings(oa_test, pc_no=2, filter_boots = TRUE) + geom_text(label="oa",aes(2,.7), size = 10, colour="black") 
+oapc2_loadings_plot_uf 
+
+```
+
+
+``` {r}
+oapc3_loadings_plot_uf <- plot_loadings(oa_test, pc_no=3, filter_boots = TRUE) + geom_text(label="oa",aes(2,.8), size = 10, colour = "black") 
+oapc3_loadings_plot_uf
+
+```
+
+
+``` {r}
+oapc4_loadings_plot_uf <- plot_loadings(oa_test, pc_no=4, filter_boots = TRUE)+ geom_text(label="oa",aes(2,.8), size = 10, colour = "black") 
+oapc4_loadings_plot_uf
+
+```
+###  Index loadings for /ua/,  uPC1-4
+
+1. Flip the loadings to match the others.
+
+```{r}
+ua_test$loadings <- ua_test$loadings %>%
+   mutate(
+        loading = if_else(PC == "PC1", loading * -1, loading)
+    ) 
+```
+
+```{r}
+uapc1_loadings_plot_uf <- plot_loadings(ua_test, pc_no=1, filter_boots = FALSE)+ geom_text(label="ua",aes(2,.8), size = 10, colour="black")
+uapc1_loadings_plot_uf
+```
+
+
+``` {r}
+uapc2_loadings_plot_uf <- plot_loadings(ua_test, pc_no=2, filter_boots = TRUE) + geom_text(label="ua",aes(2,.75), size = 10, colour="black")  
+uapc2_loadings_plot_uf
+```
+
+
+``` {r}
+uapc3_loadings_plot_uf <- plot_loadings(ua_test, pc_no=3, filter_boots = TRUE) + geom_text(label="ua",aes(2,.75), size = 10, colour="black")  
+uapc3_loadings_plot_uf
+
+```
+
+
+``` {r}
+uapc4_loadings_plot_uf <- plot_loadings(ua_test, pc_no=4, filter_boots = TRUE) + geom_text(label="ua",aes(2,.75), size = 10, colour="black")  
+uapc4_loadings_plot_uf
+
+```
+
+
+## Create horizontal index loading plot for uPC1   (Manuscript Figure 2) 
+1. Define custom function for creating horizontal index loading plots. 
+This code  is adapted from the plot_loadings() function (used above) in the nzilbb.vowels() package [@nzilbbvowels]
+
+```{r}
+plot_loadings_horizontal <- function(
+    pca_test, pc_no = 1, violin=FALSE, filter_boots = FALSE,
+    quantile_threshold = 0.25
+) {
+
+  stopifnot(
+    "Data must come from an object of class pca_test_results" =
+      class(pca_test) == "pca_test_results",
+    "pc_no must be a number." =
+      is.numeric(pc_no),
+    "violin must be either TRUE or FALSE." =
+      is.logical(violin),
+    "filter_boots must be either TRUE or FALSE." =
+      is.logical(filter_boots)
+  )
+
+  if (filter_boots) {
+
+    plot_data <- pca_test$raw_data |>
+      filter(
+        as.numeric(str_sub(.data$PC, start = 3L)) == pc_no,
+        source != "original"
+      ) |>
+      group_by(.data$source, .data$variable) |>
+      mutate(
+        median_index = stats::median(.data$index_loading),
+        quant_threshold = stats::quantile(
+          .data$index_loading,
+          quantile_threshold
+        )
+      ) |>
+      ungroup() |>
+      mutate(
+        largest_loading = .data$median_index == base::max(.data$median_index),
+      ) |>
+      group_by(.data$source, .data$iteration) |>
+      filter(
+        source != "bootstrapped" |
+        any(
+          .data$largest_loading & .data$index_loading >= .data$quant_threshold
+        )
+      ) |>
+      group_by(.data$source, .data$variable) |>
+      mutate(
+        low_limit = stats::quantile(
+          .data$index_loading,
+          (1 - pca_test$loadings_confint)/2
+        ),
+        high_limit = stats::quantile(
+          .data$index_loading,
+          1 - (1 - pca_test$loadings_confint)/2
+        )
+      ) |>
+      ungroup() |>
+      mutate(
+        distribution = if_else(
+          .data$source == "bootstrapped",
+          "Sampling",
+          "Null"
+        )
+      ) |>
+      select(-.data$index_loading, -.data$loading) |>
+      left_join(
+        pca_test$loadings |> select(
+          .data$PC,
+          .data$variable,
+          .data$index_loading,
+          .data$loading
+        ),
+        by = c("PC", "variable")
+      )
+
+    # Calculate count of kept iterations for subtitle
+    kept_iterations <- plot_data |>
+      filter(
+        .data$distribution == "Sampling"
+      ) |>
+      pull(.data$iteration) |>
+      base::unique() |>
+      base::length()
+
+    subtitle = glue(
+      "Filtered Bootstrap Sampling ({kept_iterations} Iterations) ",
+      "and Permutation-Based Null Distributions"
+    )
+
+  } else {
+
+    plot_data <- pca_test$loadings |>
+      # Filter so we only have data from desired PC.
+      filter(
+        as.numeric(str_sub(.data$PC, start = 3L)) == pc_no
+      ) |>
+      # Reshape so that both permutation and bootstrapped limits are on same
+      # variables.
+      pivot_longer(
+        cols = contains('low'),
+        names_to = "distribution",
+        values_to = 'low_limit',
+        names_pattern = "_(.*)"
+      ) |>
+      pivot_longer(
+        cols = contains('high'),
+        names_to = "distribution_2",
+        values_to = 'high_limit',
+        names_pattern = "_(.*)"
+      ) |>
+      filter(
+        .data$distribution == .data$distribution_2
+      ) |>
+      select(-"distribution_2") |>
+      mutate(
+        distribution = if_else(
+          str_detect(.data$distribution, 'null'),
+          "Null",
+          "Sampling"
+        )
+      )
+
+    subtitle = glue(
+      "Bootstrapped Sampling and Permutation-Based Null Distributions"
+    )
+
+  }
+
+  plot_data <- plot_data |>
+    mutate(
+      # Reorder 'variable'  column so variables plotted in ascending order by
+      # loading.
+      variable = fct_reorder(.data$variable, .data$index_loading),
+      loading_sign = if_else(.data$loading < 0, "-", "+")
+    )
+
+  if (violin) {
+
+    violin_data <- pca_test$raw_data |>
+      filter(
+        source == "bootstrapped",
+        as.numeric(str_sub(.data$PC, start = 3L)) == pc_no
+      ) |>
+      mutate(
+        distribution = "Sampling"
+      ) |>
+      select(
+        .data$distribution,
+        .data$variable,
+        .data$index_loading,
+        .data$loading,
+        .data$iteration
+      ) |>
+      # Reorder 'variable'  column so variables plotted in ascending order by
+      # median bootstrapped loading.
+      group_by(.data$variable) |>
+      mutate(
+        median_index = stats::median(.data$index_loading)
+      ) |>
+      ungroup() |>
+      mutate(
+        variable = fct_reorder(.data$variable, .data$median_index)
+      )
+
+    if (filter_boots) {
+      violin_data <- violin_data |>
+        group_by(.data$variable) |>
+        mutate(
+          first_quartile = stats::quantile(.data$index_loading, 0.25)
+        ) |>
+        ungroup() |>
+        mutate(
+          largest_loading = .data$median_index == max(.data$median_index),
+        ) |>
+        group_by(.data$iteration) |>
+        filter(
+          any(.data$largest_loading & .data$index_loading >= .data$first_quartile)
+        )
+
+      kept_iterations <- base::length(base::unique(violin_data$iteration))
+
+    }
+
+    violin_element <- geom_violin(
+        data = violin_data,
+        alpha = 0.5
+      )
+
+  } else {
+
+    violin_element <- NULL
+
+  }
+
+  out_plot <- plot_data |>
+    ggplot(
+      aes(
+        x = .data$index_loading,
+        y = .data$variable,
+        colour = .data$distribution
+      )
+    ) +
+    violin_element +
+    geom_errorbar(
+      aes(
+        xmin = .data$low_limit,
+        xmax = .data$high_limit
+      )
+    ) +
+    # geom_point(colour = "red") +
+    geom_text(aes(label = .data$loading_sign), size = 8, colour = "black", vjust = 0.4, family = "Consolas" ) +
+    scale_colour_manual(
+      values = c("Sampling" = "#F8766D", "Null" = "#00BFC4")
+    ) +
+    labs(
+      title = glue("Index Loadings for PC{pc_no}"),
+      subtitle = subtitle,
+      colour = "Distribution",
+      y = "Variable",
+      x = "Index Loading"
+    )
+
+  out_plot
+
+}
+
+```
+
+2. /ia/ uPC1 index loadings
+
+```{r}
+iapc1_loadings_plot_horizonal <- plot_loadings_horizontal(ia_test, pc_no=1, filter_boots = FALSE) + 
+     theme_minimal() + theme(legend.position = "none", plot.title = element_text(size = 12), text = element_text(size = 8), axis.text = element_text(size = 8))+  labs(title = "ia", subtitle = NULL)
+iapc1_loadings_plot_horizonal 
+
+ 
+```
+
+3. /ea/ uPC1 index loadings
+```{r}
+eapc1_loadings_plot_horizonal <- plot_loadings_horizontal(ea_test, pc_no=1, filter_boots = FALSE) + 
+     theme_minimal() + theme(legend.position = "none", plot.title = element_text(size = 12), axis.title.y = element_blank(), text = element_text(size = 8), axis.text = element_text(size = 8))+  labs(title = "ea", subtitle = NULL)
+
+eapc1_loadings_plot_horizonal  
+ 
+ 
+```
+
+4. /oa/ uPC1 index loadings
+
+```{r}
+oapc1_loadings_plot_horizonal  <- plot_loadings_horizontal(oa_test, pc_no=1, filter_boots = FALSE) + 
+     theme_minimal() + theme(legend.position = "none", plot.title = element_text(size = 12), axis.title.y = element_blank(), text = element_text(size = 8), axis.text = element_text(size = 8))+  labs(title = "oa", subtitle = NULL)
+
+oapc1_loadings_plot_horizonal 
+
+ 
+```
+
+5./ua/ uPC1 index loadings
+```{r}
+uapc1_loadings_plot_horizonal <- plot_loadings_horizontal(ua_test, pc_no=1, filter_boots = FALSE) + 
+     theme_minimal() +  theme(legend.position = "none", plot.title = element_text(size = 12), axis.title.y = element_blank(), text = element_text(size = 8), axis.text = element_text(size = 8))+  labs(title = "ua", subtitle = NULL)
+
+
+uapc1_loadings_plot_horizonal 
+
+ 
+```
+
+6. Create combined plot of uPC1 loadings and save 
+
+```{r}
+  uPC1AllHorizontal <-  grid.arrange(iapc1_loadings_plot_horizonal, eapc1_loadings_plot_horizonal, oapc1_loadings_plot_horizonal, uapc1_loadings_plot_horizonal, nrow = 1)
+
+
+ ggsave(here("public", "Figures", "uPCA", "uPC1AllHorizontal.png"), uPC1AllHorizontal,  width = 25, height =7 , units = "cm", bg = "white")
+ 
+  
+```
+
+## Prepare and save uPCA data
+
+1. Prepare uPCA data
+
+```{r}
+ia_pca <- ia_data %>%
+  # Remove the speaker column as this is not wanted by PCA.
+  select(-sequence, -MatchId) %>%
+  # We scale the variables (more on this in a moment)
+  prcomp(scale = TRUE)
+ 
+ea_pca <- ea_data %>%
+  select(-sequence, -MatchId) %>%
+  prcomp(scale = TRUE)
+
+ua_pca <- ua_data %>%
+  select(-sequence, -MatchId) %>%
+  prcomp(scale = TRUE)
+
+oa_pca <- oa_data %>%
+  select(-sequence, -MatchId) %>%
+  prcomp(scale = TRUE)
+```
+
+2. Add sequences details
+```{r}
+ 
+seqs_details <- read.csv(here("public", "Data", "opening_seqs_selected_data.csv")) 
+```
+
+3. Create data frames
+```{r, eval=FALSE}
+eaPCs = as.data.frame(ea_pca$x)
+eaPCs2 = eaPCs %>% select(PC1,PC2,PC3, PC4)
+iaPCs = as.data.frame(ia_pca$x)
+iaPCs2 = iaPCs %>% select(PC1,PC2,PC3, PC4)
+oaPCs = as.data.frame(oa_pca$x)
+oaPCs2 = oaPCs %>% select(PC1,PC2,PC3, PC4)
+uaPCs = as.data.frame(ua_pca$x)
+uaPCs2 = uaPCs %>% select(PC1,PC2,PC3, PC4)
+earesults = cbind(ea_data, eaPCs2)
+iaresults = cbind(ia_data, iaPCs2)
+oaresults = cbind(oa_data, oaPCs2)
+uaresults = cbind(ua_data, uaPCs2)
+
+earesults2 = left_join(earesults, seqs_details, by = c("MatchId", "sequence"))
+iaresults2 = left_join(iaresults, seqs_details,by = c("MatchId", "sequence"))
+oaresults2 = left_join(oaresults, seqs_details, by = c("MatchId", "sequence"))
+uaresults2 = left_join(uaresults, seqs_details, by = c("MatchId", "sequence"))
+```
+
+4. Save as .csvs 
+```{r, eval=FALSE}
+write.csv(earesults2, here("public", "Data", "ea_uPCAresults.csv"))
+write.csv(oaresults2, here("public", "Data","oa_uPCAresults.csv"))
+write.csv(iaresults2, here("public", "Data", "ia_uPCAresults.csv"))
+write.csv(uaresults2, here("public", "Data","ua_uPCAresults.csv"))
+```
+
+## uPCA visualisations {#sec-uPCA-vis}
+1. Read in uPCA data if need be
+```{r}
+earesults = read.csv(here("public", "Data", "ea_uPCAresults.csv"))
+oaresults = read.csv(here("public", "Data","oa_uPCAresults.csv"))
+iaresults = read.csv(here("public", "Data", "ia_uPCAresults.csv"))
+uaresults = read.csv(here("public", "Data","ua_uPCAresults.csv"))
+
+```
+
+2. Define some PC categories, We're calling everything above one 'hi', and below negative one 'low'.
+Combine these into a single data frame of 'extreme' results. 
+
+```{r}
+earesults$PC1cat = "mid"
+earesults[earesults$PC1 > 1,]$PC1cat = "hi"
+earesults[earesults$PC1 < -1,]$PC1cat = "low"
+earesultsextreme = earesults %>% filter(PC1cat != "mid")
+
+ 
+oaresults$PC1cat = "mid"
+oaresults[oaresults$PC1 > 1,]$PC1cat = "hi"
+oaresults[oaresults$PC1 < -1,]$PC1cat = "low"
+oaresultsextreme = oaresults %>% filter(PC1cat != "mid")
+
+#flip ua
+uaresults$PC1cat = "mid"
+uaresults[uaresults$PC1 > 1,]$PC1cat = "low"
+uaresults[uaresults$PC1 < -1,]$PC1cat = "hi"
+uaresultsextreme = uaresults %>% filter(PC1cat != "mid")
+
+iaresults$PC1cat = "mid"
+iaresults[iaresults$PC1 > 1,]$PC1cat = "hi"
+iaresults[iaresults$PC1 < -1,]$PC1cat = "low"
+iaresultsextreme = iaresults %>% filter(PC1cat != "mid")
+
+
+results_extreme_all <- rbind(earesults, oaresults, uaresults, iaresults)
+```
+
+3. Read in acoustic data
+```{r}
+int <- read.csv(here("public", "Data", "intcentered_per_speaker.csv")) %>% 
+select(MatchId, sequence, time, intensity)
+ 
+pitch <- read.csv(here("public", "Data", "pitch_centered_per_speaker_nofilter.csv")) %>% 
+select(MatchId, sequence, time, pitch)
+
+pitch_int <- left_join(int, pitch)
+
+
+pitch_int = pitch_int %>%  group_by(MatchId) %>%
+    mutate(c_pitch = scale(pitch, center=TRUE, scale=FALSE),
+         c_intensity = scale(intensity, center=TRUE, scale=FALSE)) 
+
+pitch = pitch_int 
+
+ 
+ formants_filtered <- read_csv(here("public", "Data", "formants_filtered_all.csv")) %>% 
+  dplyr::select(Vowel, MatchId, time, Formant, Frequency)
+  
+ formants <- formants_filtered %>% 
+  pivot_wider(
+    names_from = Formant,
+    values_from = Frequency
+  )  
+```
+
+4. Combine with uPCA results
+```{r}  
+earesultspitch = left_join(earesultsextreme, pitch, by="MatchId")
+iaresultspitch = left_join(iaresultsextreme, pitch, by="MatchId")
+oaresultspitch = left_join(oaresultsextreme, pitch,  by="MatchId")
+uaresultspitch = left_join(uaresultsextreme, pitch,  by="MatchId")
+
+earesultsformants = left_join(earesultsextreme, formants, by="MatchId")
+iaresultsformants = left_join(iaresultsextreme, formants, by="MatchId")
+oaresultsformants = left_join(oaresultsextreme, formants, by="MatchId")
+uaresultsformants = left_join( uaresultsextreme,  formants, by="MatchId")
+
+
+pc_pitch_results_all <- rbind(earesultspitch,iaresultspitch,oaresultspitch, uaresultspitch)
+pc_formants_results_all <- rbind(earesultsformants, iaresultsformants, oaresultsformants, uaresultsformants)
+ 
+```
+
+
+### Combined plot by uPC1 category (Manuscript Figure 3)
+
+1. Plot duration by uPC1 category 
+ 
+```{r}
+
+results_extreme_duration <- results_extreme_all %>% 
+  filter(PC1cat != "mid") %>% 
+  rename(s_duration = Duration..z.scored)
+
+ 
+results_extreme_duration$sequence <- factor(results_extreme_duration$sequence, levels = c("ia", "ea", "oa", "ua"))
+
+duration_plot <- ggplot(results_extreme_duration, aes(x =PC1cat,  y = s_duration, fill = PC1cat)) +
+  geom_violin() +  # Change to violin plot
+  geom_point(stat = "summary", fun = "mean", color = "white", size = 2) +  # Add points for mean
+  stat_summary(fun = "median", geom = "point", color = "black", size = 2) +  # Add points for median
+  facet_wrap(~ sequence, nrow = 1) +
+  theme_minimal() +
+  theme(panel.background = element_rect(fill = "white"), legend.position = "none") +
+  labs(y = "z-scored duration", x = "")  +
+  theme(axis.title.x = element_text(size = 8), axis.title.y = element_text(size = 8))
+
+duration_plot
+
+```
+
+2. Plot intensity trajectories by uPC1 category
+ 
+```{r}
+pc_pitch_results_all <-  pc_pitch_results_all %>% 
+  select(-sequence.x) %>% 
+  rename(sequence = sequence.y)
+
+ pc_pitch_results_all$sequence <- factor(pc_pitch_results_all$sequence, levels = c("ia", "ea", "oa", "ua"))
+
+ uPCInt <- ggplot(pc_pitch_results_all, aes(x = time, y = intensity, colour = PC1cat, label = PC1cat)) +
+  geom_textsmooth(method = "loess", span = 0.5, linewidth = 1,  size = 2) +
+  facet_wrap(~ sequence, nrow = 1) +
+  theme_minimal() +
+  labs(color = "uPC1 Category") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8))
+
+uPCInt
+```
+
+3.  Plot F1 trajectories by uPC1 category
+ 
+```{r}
+ pc_formants_results_all$sequence <- factor(pc_formants_results_all$sequence, levels = c("ia", "ea", "oa", "ua"))
+
+uPCF1 <- ggplot(pc_formants_results_all, aes(x = time, y = F1_lobanov_2.0, colour = PC1cat, label = PC1cat)) +
+  geom_textsmooth(method = "loess", span = 0.5, linewidth = 1, size = 2) +
+  facet_wrap(~ sequence, nrow = 1) +
+  theme_minimal() +
+  labs(color = "uPC1 Category") +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8))
+
+uPCF1
+
+```
+
+4. Create combined plot
+
+```{r}
+    plots_combined <- cowplot::plot_grid(duration_plot, uPCInt, uPCF1,
+                            labels = c("a", "b", "c"), ncol = 1)
+    plots_combined
+    
+```
+
+5. Save
+```{r}
+ggsave(here("public", "Figures", "uPCA", "uPC1DurationIntF1.png"), plots_combined,  width = 15, height =15 , units = "cm", bg = "white")
+
+```
+
+## F2 trajectories: high and low uPC1 tokens /ia/ (Manuscript Figure 4)
+This code creates a visualisation of the F2 trajectories of
+high and low uPC1 tokens of /ia/. 
+
+```{r}
+ uPCF2ia <- ggplot(iaresultsformants, aes(x = time, y = F2_lobanov_2.0, colour = PC1cat, label = PC1cat)) +
+  geom_textsmooth(method = "loess", span = 0.5, linewidth = 1, size = 2) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        axis.title.x = element_text(size = 8),
+        axis.title.y = element_text(size = 8))
+
+uPCF2ia
+
+ 
+ggsave(here("public", "Figures", "uPCA", "uPC1F2ia.png"), uPCF2ia,   width=9, height= 7 ,units="cm")
+
+```
+
+## Plot of High and low uPC1 formant trajectories with intensity (Manuscript Figure 5)
+
+1. Some initial data prep
+
+```{r}
+sequences  = pc_formants_results_all
+ pitch = pc_pitch_results_all
+
+
+sequences$participant_gender = as.factor(sequences$participant_gender)
+sequences$category = as.factor(sequences$category)
+ sequences$sequence = as.factor(sequences$sequence)
+ 
+
+sequences$category_gender = interaction(sequences$participant_gender, sequences$category)
+
+```
+
+### Prepare formant trajectories
+
+1. View the data
+```{r}
+vowels <- sequences
+
+ 
+vowels %>%
+  head(10) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+```
+
+2. Pivot the data
+```{r}
+vowels <- vowels %>%
+  pivot_longer(
+    cols = F1_lobanov_2.0:F2_lobanov_2.0, # Select the columns to turn into rows.
+    names_to = "Formant", # Name the column to indicate if data is F1 or F2,
+    values_to = "Frequency"
+  )
+
+vowels %>%
+  head(10) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+```
+
+3. Nest the data
+```{r}
+vowels$Vowel = vowels$sequence
+
+
+vowels <- vowels %>%
+  group_by(Vowel, Formant, PC1cat) %>%
+  nest()
+
+```
+
+4.  Fit GAMs to the data
+```{r}
+
+vowels <- vowels %>%
+  mutate(
+    model = map(
+      data, # We are applying a function to the entries of the `data` column.
+      # This is the function we are applying (introduced with a ~)
+      ~ bam( 
+        # Here's our formula.
+        Frequency ~ participant_gender +
+          s(time, by=participant_gender, k=5),
+        data = .x, # Here's our pronoun.
+        # Then some arguments to speed up the model fit.
+        method = 'fREML',
+        discrete = TRUE,
+        nthreads = 2
+      )
+    )
+  )
+```
+
+5. Get predictions 
+```{r}
+to_predict <- list(
+  "time" = seq(from=1, to=9, by=1), # All years
+  "participant_gender" = c("M", "F")
+) 
+
+vowels <- vowels %>%
+  mutate(
+    prediction = map(
+      model, # This time we're applying the function to all the models.
+      # We again introduce the function with '~', and indicate where the model 
+      # goes with '.x'.
+      ~ get_predictions(model = .x, cond = to_predict, print.summary = FALSE)
+    )
+  )
+```
+
+6. View predictions
+```{r}
+vowels$prediction[[1]] %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+```
+
+7. Format predictions
+```{r}
+predictions <- vowels %>%
+  select(
+    Vowel, Formant, PC1cat, prediction
+  ) %>%
+  unnest(prediction)
+
+predictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+predictions <- predictions %>%
+  select( # Remove unneeded variables
+    -CI
+  ) %>%
+  pivot_wider( # Pivot
+    names_from = Formant,
+    values_from = fit
+  )
+
+predictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+```
+
+8. Get first observations which we will use in the plot 
+```{r}
+predictions$Vowelcat = paste(predictions$Vowel,predictions$PC1cat)
+
+
+first_obs <- predictions %>%
+  group_by(Vowelcat, participant_gender) %>%
+  slice(which.min(time))
+
+ffirst_obs <- predictions %>% filter(participant_gender == "F") %>%
+  group_by(Vowelcat) %>%
+  slice(which.min(time))
+
+```
+
+### Prepare intensity trajectories
+1. Some data prep
+
+```{r}
+ 
+pitch$MatchTime = paste(pitch$MatchId, pitch$time)
+sequences$MatchTime = paste(sequences$MatchId, sequences$time)
+
+sequenceswithpitch = left_join(sequences, pitch)
+ 
+sequenceswithpitch$participant_gender = as.factor(sequenceswithpitch$participant_gender)
+sequenceswithpitch$category = as.factor(sequenceswithpitch$category)
+sequenceswithpitch$sequence = as.factor(sequenceswithpitch$sequence)
+
+
+sequenceswithpitch$category_gender = interaction(sequenceswithpitch$participant_gender, sequenceswithpitch$category)
+
+vowels <- sequenceswithpitch
+
+vowels %>%
+  head(10) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+```
+
+2. Nest data
+```{r}
+vowels$Vowel = vowels$sequence
+
+
+vowels <- vowels %>%
+  group_by(Vowel, PC1cat) %>%
+  nest()
+
+```
+
+3.  Fit GAMs to the data
+```{r}
+vowels <- vowels %>%
+  mutate(
+    model = map(
+      data, # We are applying a function to the entries of the `data` column.
+      # This is the function we are applying (introduced with a ~)
+      ~ bam( 
+        # Here's our formula.
+        c_intensity ~ participant_gender +
+          s(time, by=participant_gender, k=5),
+        data = .x, # Here's our pronoun.
+        # Then some arguments to speed up the model fit.
+        method = 'fREML',
+        discrete = TRUE,
+        nthreads = 2
+      )
+    )
+  )
+```
+
+4. Get predictions
+```{r}
+to_predict <- list(
+  "time" = seq(from=1, to=9, by=1), # All years
+  "participant_gender" = c("M", "F")
+) 
+# BTW: Get prediction will just assume the average value for any predictors not
+# mentioned (in this case, Speech_rate).
+
+vowels <- vowels %>%
+  mutate(
+    prediction = map(
+      model, # This time we're applying the function to all the models.
+      # We again introduce the function with '~', and indicate where the model 
+      # goes with '.x'.
+      ~ get_predictions(model = .x, cond = to_predict, print.summary = FALSE)
+    )
+  )
+```
+
+4. View predictions 
+```{r}
+vowels$prediction[[1]] %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+```
+
+5. Format predictions
+```{r}
+apredictions <- vowels %>%
+  select(
+    Vowel, prediction
+  ) %>%
+  unnest(prediction)
+
+apredictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+apredictions <- apredictions %>%
+  select( # Remove unneeded variables
+    -CI
+  ) 
+
+apredictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+```
+
+6. Get first predictions for plot
+
+```{r}
+apredictions$Vowelcat = paste(apredictions$Vowel,apredictions$PC1cat)
+
+predictions$Vowelcat = paste(predictions$Vowel,predictions$PC1cat)
+
+predictions$Intensity = apredictions$fit
+  
+
+ffirst_obs_amp <- apredictions %>% filter(participant_gender == "F") %>%
+  group_by(Vowelcat) %>%
+  slice(which.min(time))
+```
+
+
+### Generate monophthong elipses labels  + create final plot
+
+1. Read in monophthongs data
+```{r}
+monophthongs = read.csv(here("public", "Data", "monophthongsfinal.csv"))
+
+```
+
+2. Calculate mean for each monophthong  
+```{r}
+i_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "i") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+e_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "e") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+a_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "a") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+o_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "o") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+
+u_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "u") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+```
+
+3. Combine into a data frame
+```{r}
+monophthong_means <- rbind(i_means, e_means, a_means, o_means, u_means) %>% 
+  rename(F1_lobanov_2.0 = meanF1) %>% 
+  rename(F2_lobanov_2.0 = meanF2)
+```
+
+4. Make combined  plot 
+```{r}
+
+femalemono = monophthongs %>% filter(participant_gender == "F")
+femaleseq = predictions %>% filter(participant_gender == "F")
+fplot <- femalemono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+   stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+   scale_fill_grey(start = 0.1, end = 0.9) +
+    geom_text(data= monophthong_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 2)  +
+ geom_path(data = femaleseq, aes(
+    x = F2_lobanov_2.0,
+    y = F1_lobanov_2.0,
+    colour = PC1cat, linewidth = Intensity),  
+    size = 1, show.legend = TRUE,
+    arrow = arrow(length = unit(1, "mm")), size = 1) +
+  scale_color_manual(values = c("hi" = "#F8766D", "low" = "#00BFC4")) +
+   guides(colour = guide_legend(title = "uPC1 Category"), fill = "none", linewidth = "none") 
+   
+  
+fplot    + theme_classic() + scale_linewidth_continuous(range = c(.001, .85)) +
+ facet_wrap(~Vowel, nrow = 2) +
+  theme(
+    axis.title = element_text(size = 6),  
+    axis.text = element_text(size = 6), 
+    legend.position = "bottom",
+    legend.title = element_text(size = 6),
+    legend.text = element_text(size = 6)  
+  )
+```
+
+5. Save
+```{r}
+ggsave(here("public", "Figures", "uPCA", "lowhighUPC1TrajectorieswithInt.pdf"),  width= 11, height= 12.5,units="cm")
+```
+
+
+# Are the different trajectories for high and low uPC1 tokens a product of different monophthong spaces? (Manuscript footnote 1) {#sec-tangent}
+As mentioned in Footnote 1 of the manuscript, it  could be possible that speakers with predominantly high uPC1 scores and predominantly low uPC1 scores have different monophthong spaces, and
+that the different trajectories we see between high and low uPC1 tokens are actually a reflection of these
+differences. To investigate this, we plot the vowel spaces of men and women who predominantly low
+uPC1 scores. The following chunks provide the code.
+
+1. Read in data if need be. This section  uses results_extreme_all data frame and pc_formants_results_all, defined in @sec-uPCA-vis
+```{r}
+
+monophthongs = read.csv(here("public", "Data", "monophthongsfinal.csv"))  
+
+```
+
+2. Count number of high and low scoring tokens per speaker 
+
+```{r}
+per_speaker_PC_results_overlall  <- results_extreme_all %>% 
+  filter(PC1cat != "mid") %>% 
+  select(MatchId, Speaker, PC1cat, sequence) %>% 
+  group_by(Speaker,   PC1cat) %>% 
+  count()
+
+```
+
+3. Essentially pivot the data 
+```{r}
+per_speaker_PC_results_counts <- per_speaker_PC_results_overlall %>% 
+group_by(Speaker, PC1cat) %>% 
+  summarise(n = sum(n), .groups = "drop") %>%
+  pivot_wider(names_from = PC1cat, values_from = n, values_fill = list(n = 0))
+
+colnames(per_speaker_PC_results_counts) <- c("Speaker", "hi_n", "low_n")
+```
+
+4. Determine if the have more or high low scoring tokens, or if its a tie
+```{r}
+per_speaker_PC_results_counts <- per_speaker_PC_results_counts %>%
+  mutate(predominant_PC1cat = case_when(
+    hi_n > low_n ~ "hi",
+    hi_n < low_n ~ "low",
+    TRUE ~ "tie" 
+  ))
+```
+
+5. Combine with monophthongs, filter out tokens from speakers with tied high and low tokens. 
+```{r}
+monophthongs <- left_join(monophthongs, per_speaker_PC_results_counts) %>% 
+   filter(predominant_PC1cat != "tie") 
+
+```
+6. Combine with sequences data
+
+```{r}
+sequences <- left_join(pc_formants_results_all, per_speaker_PC_results_counts, by = "Speaker")   
+```
+
+7. Do some data prep for the sequences data 
+```{r}
+sequences$participant_gender = as.factor(sequences$participant_gender)
+sequences$category = as.factor(sequences$category)
+sequences$Vowel = as.factor(sequences$Vowel)
+
+sequences$category_gender = interaction(sequences$participant_gender, sequences$category)
+
+sequences <- left_join(sequences, per_speaker_PC_results_counts)
+
+```
+
+ 
+This may not be the best way of doing things, but we create separate data frames for the sequences+ monopthongs of high
+and low scoring speakers, and then plot the sequence trajectories using GAMs. 
+
+
+```{r}
+high_scoring_sequences <- sequences %>% 
+  filter(predominant_PC1cat == "hi") 
+
+low_scoring_sequences <- sequences %>% 
+  filter(predominant_PC1cat == "low") 
+
+
+
+high_scoring_mono <- monophthongs %>% 
+    filter(predominant_PC1cat == "hi") 
+
+low_scoring_mono <-  monophthongs %>% 
+  filter(predominant_PC1cat == "low") 
+
+
+```
+
+## High scoring speakers only, men and women 
+1. View data for high scoring seqs 
+```{r}
+vowels <- high_scoring_sequences
+
+ 
+vowels %>%
+  head(10) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+```
+ 
+
+3. Pivot data
+```{r}
+
+vowels <- vowels %>%
+  pivot_longer(
+    cols = F1_lobanov_2.0:F2_lobanov_2.0, # Select the columns to turn into rows.
+    names_to = "Formant", # Name the column to indicate if data is F1 or F2,
+    values_to = "Frequency"
+  )
+```
+4. Nest data 
+```{r}
+vowels <- vowels %>%
+  group_by(Vowel, Formant, PC1cat) %>%
+  nest()
+
+```
+
+4.  Fit GAMs to the data
+```{r}
+ 
+vowels <- vowels %>%
+  mutate(
+    model = map(
+      data, # We are applying a function to the entries of the `data` column.
+      # This is the function we are applying (introduced with a ~)
+      ~ bam( 
+        # Here's our formula.
+        Frequency ~ participant_gender +
+          s(time, by=participant_gender, k=5),
+        data = .x, # Here's our pronoun.
+        # Then some arguments to speed up the model fit.
+        method = 'fREML',
+        discrete = TRUE,
+        nthreads = 2
+      )
+    )
+  )
+```
+
+5. Get predictions 
+```{r}
+ to_predict <- list(
+  "time" = seq(from=1, to=9, by=1), # All years
+  "participant_gender" = c("M", "F")
+) 
+# BTW: Get prediction will just assume the average value for any predictors not
+# mentioned (in this case, Speech_rate).
+
+vowels <- vowels %>%
+  mutate(
+    prediction = map(
+      model, # This time we're applying the function to all the models.
+      # We again introduce the function with '~', and indicate where the model 
+      # goes with '.x'.
+      ~ get_predictions(model = .x, cond = to_predict, print.summary = FALSE)
+    )
+  )
+```
+
+6. View predictions
+
+```{r}
+vowels$prediction[[1]] %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+```
+7. Formant predictions
+```{r}
+predictions <- vowels %>%
+  select(
+    Vowel, Formant, PC1cat, prediction
+  ) %>%
+  unnest(prediction)
+
+predictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+predictions <- predictions %>%
+  select( # Remove unneeded variables
+    -CI
+  ) %>%
+  pivot_wider( # Pivot
+    names_from = Formant,
+    values_from = fit
+  )
+
+predictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+
+```
+
+8. More predictions formatting 
+```{r}
+predictions$Vowelcat = paste(predictions$Vowel,predictions$PC1cat)
+
+
+first_obs <- predictions %>%
+  group_by(Vowelcat, participant_gender) %>%
+  slice(which.min(time))
+
+```
+
+9. Calculate means to label monophthong ellipses
+
+```{r}
+i_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "i") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+e_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "e") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+a_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "a") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+o_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "o") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+
+u_means <- monophthongs %>% 
+  filter(Target.teAkaSegment == "u") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+monophthong_means <- rbind(i_means, e_means, a_means, o_means, u_means) %>% 
+  rename(F1_lobanov_2.0 = meanF1) %>% 
+  rename(F2_lobanov_2.0 = meanF2)
+```
+
+
+9. Plot women
+```{r}
+
+femalemono = high_scoring_mono %>% filter(participant_gender == "F")
+femaleseq = predictions %>% filter(participant_gender == "F")
+
+fplot <- femalemono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+   stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+   scale_fill_grey(start = 0.1, end = 0.9) +
+    geom_text(data= monophthong_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 2)  +
+ geom_path(data = femaleseq, aes(
+    x = F2_lobanov_2.0,
+    y = F1_lobanov_2.0,
+    colour = PC1cat),  
+    size = 1, show.legend = TRUE,
+    arrow = arrow(length = unit(1, "mm")), size = 1) +
+  scale_color_manual(values = c("hi" = "#F8766D", "low" = "#00BFC4")) +
+   guides(colour = guide_legend(title = "uPC1 Category"), fill = "none", linewidth = "none") 
+   
+  
+fplot    + theme_classic() + 
+ facet_wrap(~Vowel, nrow = 2) +
+  labs(title = "Sequences and monopthongs: women with predominantely high uPC1 scores") +
+  theme(
+    text = element_text(size = 6),
+    legend.position = "bottom"
+  )
+
+```
+10. Plot men
+
+```{r}
+
+malemono = high_scoring_mono %>% filter(participant_gender == "M")
+maleseq = predictions %>% filter(participant_gender == "M")
+
+mplot <- malemono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+   stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+   scale_fill_grey(start = 0.1, end = 0.9) +
+    geom_text(data= monophthong_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 2)  +
+ geom_path(data = maleseq, aes(
+    x = F2_lobanov_2.0,
+    y = F1_lobanov_2.0,
+    colour = PC1cat),  
+    size = 1, show.legend = TRUE,
+    arrow = arrow(length = unit(1, "mm")), size = 1) +
+  scale_color_manual(values = c("hi" = "#F8766D", "low" = "#00BFC4")) +
+   guides(colour = guide_legend(title = "uPC1 Category"), fill = "none", linewidth = "none") 
+   
+  
+mplot    + theme_classic()+ 
+ facet_wrap(~Vowel, nrow = 2) +
+  labs(title = "Sequences and monopthongs: men with predominantely high uPC1 scores") +
+  theme(
+    text = element_text(size = 6),
+    legend.position = "bottom"
+  )
+```
+## Low scoring speakers only,  men and women 
+
+1. View data for low scoring seqs 
+```{r}
+vowels <- low_scoring_sequences
+
+ 
+vowels %>%
+  head(10) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+```
+ 
+
+3. Pivot data
+```{r}
+
+vowels <- vowels %>%
+  pivot_longer(
+    cols = F1_lobanov_2.0:F2_lobanov_2.0, # Select the columns to turn into rows.
+    names_to = "Formant", # Name the column to indicate if data is F1 or F2,
+    values_to = "Frequency"
+  )
+```
+4. Nest data 
+```{r}
+vowels <- vowels %>%
+  group_by(Vowel, Formant, PC1cat) %>%
+  nest()
+
+```
+
+4.  Fit GAMs to the data
+```{r}
+vowels <- vowels %>%
+  mutate(
+    model = map(
+      data, # We are applying a function to the entries of the `data` column.
+      # This is the function we are applying (introduced with a ~)
+      ~ bam( 
+        # Here's our formula.
+        Frequency ~ participant_gender +
+          s(time, by=participant_gender, k=5),
+        data = .x, # Here's our pronoun.
+        # Then some arguments to speed up the model fit.
+        method = 'fREML',
+        discrete = TRUE,
+        nthreads = 2
+      )
+    )
+  )
+```
+
+5. Get predictions 
+```{r}
+ to_predict <- list(
+  "time" = seq(from=1, to=9, by=1), # All years
+  "participant_gender" = c("M", "F")
+) 
+# BTW: Get prediction will just assume the average value for any predictors not
+# mentioned (in this case, Speech_rate).
+
+vowels <- vowels %>%
+  mutate(
+    prediction = map(
+      model, # This time we're applying the function to all the models.
+      # We again introduce the function with '~', and indicate where the model 
+      # goes with '.x'.
+      ~ get_predictions(model = .x, cond = to_predict, print.summary = FALSE)
+    )
+  )
+```
+
+6. View predictions
+
+```{r}
+vowels$prediction[[1]] %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+```
+
+7. Format predictions
+```{r}
+predictions <- vowels %>%
+  select(
+    Vowel, Formant, PC1cat, prediction
+  ) %>%
+  unnest(prediction)
+
+predictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+predictions <- predictions %>%
+  select( # Remove unneeded variables
+    -CI
+  ) %>%
+  pivot_wider( # Pivot
+    names_from = Formant,
+    values_from = fit
+  )
+
+predictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+
+```
+
+8. More predictions formatting 
+```{r}
+predictions$Vowelcat = paste(predictions$Vowel,predictions$PC1cat)
+
+
+first_obs <- predictions %>%
+  group_by(Vowelcat, participant_gender) %>%
+  slice(which.min(time))
+
+```
+
+9. Plot women
+```{r}
+
+femalemono = low_scoring_mono %>% filter(participant_gender == "F")
+femaleseq = predictions %>% filter(participant_gender == "F")
+
+fplot <- femalemono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+   stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+   scale_fill_grey(start = 0.1, end = 0.9) +
+    geom_text(data= monophthong_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 2)  +
+ geom_path(data = femaleseq, aes(
+    x = F2_lobanov_2.0,
+    y = F1_lobanov_2.0,
+    colour = PC1cat),  
+    size = 1, show.legend = TRUE,
+    arrow = arrow(length = unit(1, "mm")), size = 1) +
+  scale_color_manual(values = c("hi" = "#F8766D", "low" = "#00BFC4")) +
+   guides(colour = guide_legend(title = "uPC1 Category"), fill = "none", linewidth = "none") 
+   
+  
+fplot    + theme_classic() + 
+ facet_wrap(~Vowel, nrow = 2) +
+  labs(title = "Sequences and monopthongs: women with predominantely low uPC1 scores") +
+  theme(
+    text = element_text(size = 6),
+    legend.position = "bottom"
+  )
+
+```
+10. Plot men
+
+```{r}
+
+malemono = low_scoring_mono %>% filter(participant_gender == "M")
+maleseq = predictions %>% filter(participant_gender == "M")
+
+mplot <- malemono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+   stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+   scale_fill_grey(start = 0.1, end = 0.9) +
+    geom_text(data= monophthong_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 2)  +
+ geom_path(data = maleseq, aes(
+    x = F2_lobanov_2.0,
+    y = F1_lobanov_2.0,
+    colour = PC1cat),  
+    size = 1, show.legend = TRUE,
+    arrow = arrow(length = unit(1, "mm")), size = 1) +
+  scale_color_manual(values = c("hi" = "#F8766D", "low" = "#00BFC4")) +
+   guides(colour = guide_legend(title = "uPC1 Category"), fill = "none", linewidth = "none") 
+   
+  
+mplot    + theme_classic()+ 
+ facet_wrap(~Vowel, nrow = 2) +
+  labs(title = "Sequences and monopthongs: men with predominantely low uPC1 scores") +
+  theme(
+    text = element_text(size = 6),
+    legend.position = "bottom"
+  )
+```
+
+
+# Regression analysis (Manuscript §4.2)  {#sec-regression}
+## Custom functions 
+1.  Function to get the local mean monophthong duration within a window of X seconds (default 10) either side of a target timestamp in a target transcript
+```{r}
+ local_mean_duration = function(target_transcript, target_timestamp, window=10) {
+  monopthong_dat %>%
+    filter(transcript == target_transcript, abs(target_timestamp - timestamp) <= window) %>%
+    pull(duration) %>%
+    mean(.)
+}
+```
+2. Function to center variables
+```{r} 
+c. <- function (x) scale(x, scale = FALSE)
+```
+
+3. Function to calculate VIFs and display them in a table
+```{r}
+display_vif = function(mod, output_kable=TRUE, ...) {
+  table <- vif(mod, type="terms")
+  # Check if VIFs or GVIFs have been calculated
+  if (is.null(dim(table))) {
+    table <- vif_table(table, output_kable, ...)
+  } else {
+    table <- gvif_table(table, output_kable, ...)
+  }
+  return(table)
+}
+```
+4. Function to neatly display a VIF table
+```{r}
+vif_table = function(table, output_kable=TRUE, ...) {
+  table = table %>%
+    data.frame() %>%
+    rlang::set_names(c("vif")) %>%
+    rownames_to_column("parameter") %>%
+    mutate(
+      parameter = parameter %>%
+        str_replace_all(
+          .,
+          "(?<=^|\\:)(?:c\\.\\()([^:]+)(?:\\))(?=$|\\:)",
+          "\\1 (centered)"
+        ) %>%
+        str_replace_all(., fixed(":"), " &times; ")
+    )
+  if (output_kable) {
+    table = table %>%
+    kable(digits=3, escape=F, col.names=c("Parameter", "VIF"), align="lr", ...) %>%
+    kable_styling()
+  }
+  return(table)
+}
+
+```
+5. Function to neatly display a GVIF table
+```{r}  
+gvif_table = function(table, output_kable=TRUE, ...) {
+  table = table %>%
+    data.frame() %>%
+    rlang::set_names(c("gvif", "df", "transformed")) %>%
+    rownames_to_column("parameter") %>%
+    mutate(
+      parameter = parameter %>%
+        str_replace_all(
+          .,
+          "(?<=^|\\:)(?:c\\.\\()([^:]+)(?:\\))(?=$|\\:)",
+          "\\1 (centered)"
+        ) %>%
+        str_replace_all(., fixed(":"), " &times; "),
+      transformed = transformed ^ 2
+    )
+  if (output_kable) {
+    table = table %>%
+    kable(digits=3, escape=F, col.names=c("Parameter", "GVIF", "df", "Transformed GVIF"), align="lrrr", ...) %>%
+    kable_styling()
+  }
+  return(table)
+}
+```
+
+6. Function to create table of the  regression results with the  Estimate, SE, df, t, and p values rounded to 3 decimal places 
+```{r}
+format_lmer_table <- function(model, digits = 3) {
+  model_summary <- summary(model)
+
+  coefs <- as.data.frame(coef(summary(model)))
+  
+  coefs <- coefs %>%
+    rename(Estimate = Estimate, SE = `Std. Error`, df = `df`, 
+           t = `t value`, p = `Pr(>|t|)`) %>%
+    mutate(
+      across(c(Estimate, SE, t), ~ round(.x, digits)),   
+      df = round(df, 0),  
+      p = ifelse(p < 0.001, "<0.001", sprintf(paste0("%.", digits, "f"), p))  
+    )
+  
+  return(coefs)
+}
+
+```
+## Calculate local speech rate for each sequence token
+
+This code is used to determine the local speech rate measures used in the regression analyses. Used to determine 
+the mean duration of  monophthongs in a transcript within a window of 10 seconds either side of a given sequence.
+
+1. Monophthongs data if needed 
+```{r, eval= FALSE}
+monophthongs = read.csv(here("public", "Data", "monophthongsfinal.csv"))
+```
+
+2. Calculate monophthong duration 
+```{r}
+monophthongs$duration  =  monophthongs$Target.teAkaSegment.end - monophthongs$Target.teAkaSegment.start
+
+mono <- monophthongs %>% 
+  select(Transcript, Speaker, duration, Target.teAkaSegment.start)
+
+
+monopthong_dat <-  mono %>% 
+  rename(timestamp = Target.teAkaSegment.start) %>% 
+  rename(transcript = Transcript)
+
+```
+
+
+3. Add  local speech rate (using function defined above) for /ia/ tokens + save data frame 
+```{r, eval= FALSE}
+ia <- read.csv(here("public", "Data", "ia_uPCAresults.csv")) %>% 
+  left_join(
+        read.csv(here("public", "Data", "MAONZE_opening_seqs.csv"), header=TRUE, encoding="UTF-8") %>% 
+          select(Transcript, MatchId, Target.vowelCluster.start) 
+      )
+
+ia <-  ia %>% 
+  rename(target_timestamp = Target.vowelCluster.start) %>% 
+  rename(target_transcript = Transcript)
+
+
+ia <- ia %>% 
+ mutate(
+    mean_rate = map2_dbl(ia$target_transcript, ia$target_timestamp, local_mean_duration, window = 10)
+  )
+
+ ia <- ia %>% 
+  drop_na(mean_rate)
+
+write.csv(ia, here("public", "Data","ia_PC_results_local_rate.csv"))
+```
+
+3. Add  local speech rate for /ea/ tokens  + save data frame 
+```{r, eval= FALSE}
+ea <- read.csv(here("public", "Data", "ea_uPCAresults.csv")) %>% 
+  left_join(
+        read.csv(here("public", "Data", "MAONZE_opening_seqs.csv"), header=TRUE, encoding="UTF-8") %>% 
+          select(Transcript, MatchId, Target.vowelCluster.start) 
+      )
+
+ea <-  ea %>% 
+  rename(target_timestamp = Target.vowelCluster.start) %>% 
+  rename(target_transcript = Transcript)
+
+
+ea <- ea %>% 
+ mutate(
+    mean_rate = map2_dbl(ea$target_transcript, ea$target_timestamp, local_mean_duration, window = 10)
+  )
+
+ ea <- ea %>% 
+  drop_na(mean_rate)
+
+write.csv(ea, here("public", "Data","ea_PC_results_local_rate.csv"))
+```
+
+4. Add  local speech rate for /oa/ tokens  + save data frame 
+
+```{r, eval= FALSE}
+oa <- read.csv(here("public", "Data", "oa_uPCAresults.csv")) %>% 
+  left_join(
+        read.csv(here("public", "Data", "MAONZE_opening_seqs.csv"), header=TRUE, encoding="UTF-8") %>% 
+          select(Transcript, MatchId, Target.vowelCluster.start) 
+      )
+
+oa <-  oa %>% 
+  rename(target_timestamp = Target.vowelCluster.start) %>% 
+  rename(target_transcript = Transcript)
+
+
+oa <- oa %>% 
+ mutate(
+    mean_rate = map2_dbl(oa$target_transcript,oa$target_timestamp, local_mean_duration, window = 10)
+  )
+
+ oa <- oa %>% 
+  drop_na(mean_rate)
+
+write.csv(oa, here("public", "Data","oa_PC_results_local_rate.csv"))
+```
+
+4. Add  local speech rate for /ua/ tokens  + save data frame 
+```{r, eval= FALSE}
+ua <- read.csv(here("public", "Data", "ua_uPCAresults.csv")) %>% 
+  left_join(
+        read.csv(here("public", "Data", "MAONZE_opening_seqs.csv"), header=TRUE, encoding="UTF-8") %>% 
+          select(Transcript, MatchId, Target.vowelCluster.start) 
+      )
+
+ua <-  ua %>% 
+  rename(target_timestamp = Target.vowelCluster.start) %>% 
+  rename(target_transcript = Transcript)
+
+
+ua <- ua %>% 
+ mutate(
+    mean_rate = map2_dbl(ua$target_transcript,ua$target_timestamp, local_mean_duration, window = 10)
+  )
+
+ ua <- ua %>% 
+  drop_na(mean_rate)
+
+write.csv(ua, here("public", "Data","ua_PC_results_local_rate.csv"))
+```
+
+## /ia/ regression model
+1. Read in data, create phonological form trackers
+```{r}
+ia = read.csv(here("public", "Data","ia_PC_results_local_rate.csv"), header=TRUE, encoding="UTF-8", row.names=1) %>%
+  # merge pause data
+  left_join(
+    read.csv(here("public", "Data", "pause_info.csv"), header=TRUE, encoding="UTF-8", row.names=1),
+    by = "MatchId"
+  ) %>%
+  # create phonological form trackers
+  mutate(
+    phon.word = word %>% 
+      str_replace("([AEIOU])\\1", "\\1") %>%
+      str_replace(fixed("wh"), "f") %>%
+      str_replace(fixed("ng"), "N"),
+    prev_c = str_extract(phon.word, ".(?=ia)"),
+    prev_c_tongue = case_when(
+      prev_c %in% c("p", "m", "f", "h") ~ "neutral",
+      prev_c %in% c("t", "n", "r") ~ "coronal",
+      prev_c %in% c("k", "N", "w") ~ "dorsal"
+    )
+  )
+```
+
+2. Set up factors as required
+```{r}
+ia = ia %>%
+  mutate(
+    category = factor(category, levels=c("Historical", "PresentElder", "L1", "L2")),
+    stress = factor(stress == "yes"),
+    participant_gender = factor(participant_gender, levels=c("M", "F")),
+    complex = factor(complex == "yes"),
+    final = factor(final == "TRUE"),
+    prev_c_tongue = factor(prev_c_tongue, levels=c("neutral", "coronal", "dorsal")),
+    moraPositionFactor = ifelse(moraPosition > 2, "3+", moraPosition),
+    moraPositionFactor = factor(moraPositionFactor, levels=c("1", "2", "3+")))
+ 
+```
+
+3. Set up contrasts for factors 
+```{r}
+contrasts(ia$category) = matrix(c(c(-1,1,0,0)/2, c(-1,-1,1,1)/2, c(0,0,-1,1)/2), ncol=3)
+colnames(contrasts(ia$category)) = c("|PresentElder.v.Historical", "|L1L2.v.HistoricalPresentElder", "|L2.v.L1")
+contrasts(ia$stress) = contr.helmert(2)
+colnames(contrasts(ia$stress)) = c("|y.v.n")
+contrasts(ia$participant_gender) = contr.helmert(2)
+colnames(contrasts(ia$participant_gender)) = c("|F.v.M")
+contrasts(ia$complex) = contr.helmert(2)
+colnames(contrasts(ia$complex)) = c("|y.v.n")
+contrasts(ia$final) = contr.helmert(2)
+colnames(contrasts(ia$final)) = c("|y.v.n")
+contrasts(ia$prev_c_tongue) = contr.treatment(3) - 1/3
+colnames(contrasts(ia$prev_c_tongue)) = c("|coronal.v.neutral", "|dorsal.v.neutral")
+contrasts(ia$moraPositionFactor) <- contr.treatment(3)
+```
+
+4. Bin pause data 
+```{r}
+ia = ia %>%
+mutate(
+  pause_bin = factor(pause_length > 0.25, levels=c(FALSE, TRUE)) )  
+```
+
+
+5. Set up final_pause annotations and define contrasts
+```{r}
+ia <- ia %>% 
+  mutate(final_pause  = case_when(
+    final == TRUE & pause_bin == TRUE ~ TRUE,
+    final == TRUE & pause_bin == FALSE ~ FALSE,
+    final == FALSE & pause_bin == TRUE ~ FALSE,
+    final == FALSE & pause_bin == FALSE ~ FALSE,
+  ))
+
+contrasts(ia$final_pause) = contr.helmert(2)
+colnames(contrasts(ia$final_pause)) = c("|y.v.n")
+```
+
+6. Inverse transform  `mean_rate`, then remove potential leverage points <= 5  > 31  
+```{r}
+ia <-  ia %>% 
+  mutate(mean_rate_transf = 1/mean_rate)  %>%
+  filter(mean_rate_transf > 5, mean_rate_transf <  31)
+
+```
+
+The inverse transformation is due to the   data skew, which is shown below. There  various tokens of very slow speech that could be  leverage points.
+```{r}
+
+with(ia, table(category, cut(mean_rate, breaks=c(seq(from=0.03, to=0.3, by=0.02), 1))))
+```
+
+As shown here, inverse-transforming helps. 
+```{r}
+with(ia, table(category, cut(1/mean_rate, breaks=seq(from=1, to=35, by=1))))
+```
+
+
+7. Define model 
+
+```{r}
+ hyp.mod.ia = lmer(PC1 ~ category * (participant_gender + moraPositionFactor + complex +  c.(mean_rate_transf)) + final_pause + prev_c_tongue + (1 | Speaker) + (1  | word.alt.format), data=ia, REML=F)
+```
+
+8. Check VIFs 
+```{r}
+display_vif(hyp.mod.ia) 
+```
+
+9. Table of model results 
+```{r}
+lmer_table_ia = format_lmer_table(hyp.mod.ia)
+knitr::kable(lmer_table_ia, caption="Model of ia uPC1")
+```
+
+10. Get speaker intercepts, save as .csv
+```{r, eval= FALSE}
+speaker_intercepts_ia <- ranef(hyp.mod.ia)$Speaker
+
+speaker_intercepts_ia_df <- data.frame(Speaker = rownames(speaker_intercepts_ia), Intercept = speaker_intercepts_ia[, 1])
+
+speaker_intercepts_ia_df <- speaker_intercepts_ia_df %>% 
+  mutate(sequence = "ia" )
+
+write.csv(speaker_intercepts_ia_df, here("public", "Data", "speaker_intercepts_ia.csv"))
+
+```
+
+11. Investigate significant effects
+a) Is there evidence of an overall category effect?
+
+```{r}
+hyp.mod.ia.min.cat <- update(hyp.mod.ia, ~ . - category - category:participant_gender - category:moraPositionFactor - category:complex  - category:c.(mean_rate_transf))
+anova(hyp.mod.ia, hyp.mod.ia.min.cat)
+```
+Yes, there is. 
+
+b) Investigating category differences further with an EMM test
+```{r}
+emmeans(hyp.mod.ia, pairwise ~ category)
+```
+
+Significant differences between Present Elders + L1, as well and Present Elders + L2
+c) Is there evidence of an overall gender effect?
+```{r}
+hyp.mod.ia.min.gen <- update(hyp.mod.ia, ~ . - participant_gender - category:participant_gender) 
+anova(hyp.mod.ia, hyp.mod.ia.min.gen)
+```
+Yes, there is.
+
+d) Investigating gender differences further with an EMM test 
+```{r}
+emmeans(hyp.mod.ia, pairwise ~ participant_gender)
+```
+Signficant pairwise comparision for gender.
+
+e) Is there an overall effect of mora position?|
+```{r}
+hyp.mod.ia.min.moraPos <- update(hyp.mod.ia, ~ . - moraPositionFactor - category:moraPositionFactor)
+anova(hyp.mod.ia, hyp.mod.ia.min.moraPos) #
+```
+No signficant effect of mora position by itself. Indicates  that effect lies in 
+interactions. 
+f) Investigating further by conducting an EMM test on the interaction with category. 
+
+```{r}
+emmeans(hyp.mod.ia, pairwise ~ moraPositionFactor| category)
+```
+No significant difference between mora postions within any of the categories. 
+
+## /ea/ regression model
+1. Read in data, create phonological form trackers
+```{r}
+ea = read.csv(here("public", "Data", "ea_PC_results_local_rate.csv"), header=TRUE, encoding="UTF-8", row.names=1) %>%
+  # merge pause data
+  left_join(
+    read.csv(here("public", "Data", "pause_info.csv"), header=TRUE, encoding="UTF-8", row.names=1),
+    by = "MatchId"
+  ) %>%
+  mutate(
+    phon.word = word %>% 
+      str_replace("([AEIOU])\\1", "\\1") %>%
+      str_replace(fixed("wh"), "f") %>%
+      str_replace(fixed("ng"), "N"),
+    prev_c = str_extract(phon.word, ".(?=ea)"),
+    prev_c_tongue = case_when(
+      prev_c %in% c("p", "m", "f", "h") ~ "neutral",
+      prev_c %in% c("t", "n", "r") ~ "coronal",
+      prev_c %in% c("k", "N", "w") ~ "dorsal"
+    )
+  )
+```
+2. Set up factors as required
+
+```{r}
+ea = ea %>%
+  mutate(
+    category = factor(category, levels=c("Historical", "PresentElder", "L1", "L2")),
+    stress = factor(stress == "yes"),
+    participant_gender = factor(participant_gender, levels=c("M", "F")),
+    complex = factor(complex == "yes"),
+    final = factor(final == "TRUE"),
+    prev_c_tongue = factor(prev_c_tongue, levels=c("neutral", "coronal", "dorsal")),
+    moraPositionFactor = ifelse(moraPosition > 2, "3+", moraPosition),
+    moraPositionFactor = factor(moraPositionFactor, levels=c("1", "2", "3+")))
+```
+
+3. Set up contrasts for factors
+```{r}
+contrasts(ea$category) = matrix(c(c(-1,1,0,0)/2, c(-1,-1,1,1)/2, c(0,0,-1,1)/2), ncol=3)
+colnames(contrasts(ea$category)) = c("|PresentElder.v.Historical", "|L1L2.v.HistoricalPresentElder", "|L2.v.L1")
+
+contrasts(ea$stress) = contr.helmert(2)
+colnames(contrasts(ea$stress)) = c("|y.v.n")
+contrasts(ea$participant_gender) = contr.helmert(2)
+colnames(contrasts(ea$participant_gender)) = c("|F.v.M")
+contrasts(ea$complex) = contr.helmert(2)
+colnames(contrasts(ea$complex)) = c("|y.v.n")
+contrasts(ea$final) = contr.helmert(2)
+colnames(contrasts(ea$final)) = c("|y.v.n")
+contrasts(ea$prev_c_tongue) = contr.treatment(3) - 1/3
+colnames(contrasts(ea$prev_c_tongue)) = c("|coronal.v.neutral", "|dorsal.v.neutral")
+contrasts(ea$moraPositionFactor) <- contr.treatment(3)
+```
+
+
+4. Bin pause data 
+```{r}
+ea = ea %>%
+  mutate(
+    pause_bin = factor(pause_length > 0.25, levels=c(FALSE, TRUE)))
+```
+
+5. Set up final_pause annotations and define contrasts
+```{r}
+ea <- ea %>% 
+  mutate(final_pause  = case_when(
+    final == TRUE & pause_bin == TRUE ~ TRUE,
+    final == TRUE & pause_bin == FALSE ~ FALSE,
+    final == FALSE & pause_bin == TRUE ~ FALSE,
+    final == FALSE & pause_bin == FALSE ~ FALSE,
+  ))
+
+
+contrasts(ea$final_pause) = contr.helmert(2)
+colnames(contrasts(ea$final_pause)) = c("|y.v.n")
+```
+
+6. Inverse transform  `mean_rate`, then remove potential leverage points <= 5  > 31. Reasoning for this descision 
+is shwon for /ia/ above. 
+```{r}
+ea <-  ea %>% 
+  mutate(mean_rate_transf = 1/mean_rate) %>%
+  filter(mean_rate_transf > 5, mean_rate_transf <  31)
+
+```
+7. Define model
+
+```{r}
+hyp.mod.ea <-  lmer(PC1 ~ category * (participant_gender +   complex   +c.(mean_rate_transf) ) + final_pause +    prev_c_tongue + (1   | Speaker) + (1  | word.alt.format), data=ea, REML=F)
+
+```
+
+8. Check VIFs 
+```{r}
+display_vif(hyp.mod.ea) 
+```
+9. Table of model results 
+```{r}
+lmer_table_ea = format_lmer_table(hyp.mod.ea)
+knitr::kable(lmer_table_ea, caption="Model of ea uPC1")
+ 
+```
+
+10. Get speaker intercepts, save as .csv
+```{r, eval=FALSE}
+speaker_intercepts_ea <- ranef(hyp.mod.ea)$Speaker
+
+speaker_intercepts_ea_df <- data.frame(Speaker = rownames(speaker_intercepts_ea), Intercept = speaker_intercepts_ea[, 1])
+
+speaker_intercepts_ea_df <- speaker_intercepts_ea_df %>% 
+  mutate(sequence = "ea" )
+
+write.csv(speaker_intercepts_ea_df, here("public", "Data", "speaker_intercepts_ea.csv"))
+```
+
+11. Investigate significant effects
+a) Is there evidence of an overall category effect?
+```{r}
+hyp.mod.ea.min.cat <- update(hyp.mod.ea, ~ . - category - category:participant_gender - category:stress - category:complex - category:c.(mean_rate_transf))
+anova(hyp.mod.ea, hyp.mod.ea.min.cat)
+```
+
+Yes there is. 
+
+b) Investigating category differences further with an EMM test
+```{r}
+emmeans(hyp.mod.ea, pairwise ~ category)
+```
+
+No signficant differences. Indicates category effect lies in interactions
+
+c) Is there a signficant overall effect of complex?
+```{r}
+hyp.mod.ea.min.complex <- update(hyp.mod.ea, ~ . - complex - category:complex)
+
+anova(hyp.mod.ea, hyp.mod.ea.min.complex)  
+```
+
+Yes there is. 
+
+d) Investigating further with an EMM test
+```{r}
+emmeans(hyp.mod.ea, pairwise ~ complex)
+```
+Significant pairwise comparison 
+
+## /oa/ regression model
+1. Read in data, create phonological form trackers
+```{r}
+oa = read.csv(here("public", "Data", "oa_PC_results_local_rate.csv"), header=TRUE, encoding="UTF-8", row.names=1) %>%
+  # merge pause data
+  left_join(
+    read.csv(here("public", "Data", "pause_info.csv"), header=TRUE, encoding="UTF-8", row.names=1),
+    by = "MatchId"
+  ) %>%
+  mutate(
+    phon.word = word %>% 
+      str_replace("([AEIOU])\\1", "\\1") %>%
+      str_replace(fixed("wh"), "f") %>%
+      str_replace(fixed("ng"), "N"),
+    prev_c = str_extract(phon.word, ".(?=oa)"),
+    prev_c_tongue = case_when(
+      prev_c %in% c("p", "m", "f", "h") ~ "neutral",
+      prev_c %in% c("t", "n", "r") ~ "coronal",
+      prev_c %in% c("k", "N", "w") ~ "dorsal"
+    )
+  )
+```
+
+2. Set up factors as required
+```{r}
+oa = oa %>%
+  mutate(
+    category = factor(category, levels=c("Historical", "PresentElder", "L1", "L2")),
+    stress = factor(stress == "yes"),
+    participant_gender = factor(participant_gender, levels=c("M", "F")),
+    complex = factor(complex == "yes"),
+    final = factor(final == "TRUE"),
+    prev_c_tongue = factor(prev_c_tongue, levels=c("neutral", "coronal", "dorsal")),
+    moraPositionFactor = ifelse(moraPosition > 2, "3+", moraPosition),
+    moraPositionFactor = factor(moraPositionFactor, levels=c("1", "2", "3+")))
+
+```
+3. Set up contrasts for factors 
+```{r}
+contrasts(oa$category) = matrix(c(c(-1,1,0,0)/2, c(-1,-1,1,1)/2, c(0,0,-1,1)/2), ncol=3)
+colnames(contrasts(oa$category)) = c("|PresentElder.v.Historical", "|L1L2.v.HistoricalPresentElder", "|L2.v.L1")
+contrasts(oa$stress) = contr.helmert(2)
+colnames(contrasts(oa$stress)) = c("|y.v.n")
+contrasts(oa$participant_gender) = contr.helmert(2)
+colnames(contrasts(oa$participant_gender)) = c("|F.v.M")
+contrasts(oa$complex) = contr.helmert(2)
+colnames(contrasts(oa$complex)) = c("|y.v.n")
+contrasts(oa$final) = contr.helmert(2)
+colnames(contrasts(oa$final)) = c("|y.v.n")
+contrasts(oa$prev_c_tongue) = contr.treatment(3) - 1/3
+colnames(contrasts(oa$prev_c_tongue)) = c("|coronal.v.neutral", "|dorsal.v.neutral")
+contrasts(oa$moraPositionFactor) <- contr.treatment(3)
+```
+4. Bin pause data 
+```{r}
+  oa = oa %>%
+  mutate(
+    pause_bin = factor(pause_length > 0.25, levels=c(FALSE, TRUE)) )  
+```
+
+5. Set up final_pause annotations and define contrasts
+```{r}
+oa <- oa %>% 
+  mutate(final_pause  = case_when(
+    final == TRUE & pause_bin == TRUE ~ TRUE,
+    final == TRUE & pause_bin == FALSE ~ FALSE,
+    final == FALSE & pause_bin == TRUE ~ FALSE,
+    final == FALSE & pause_bin == FALSE ~ FALSE,
+  ))
+
+contrasts(oa$final_pause) = contr.helmert(2)
+colnames(contrasts(oa$final_pause)) = c("|y.v.n")
+```
+
+6. Inverse transform  `mean_rate`, then remove potential leverage points <= 5  > 31. See /ia/ section for reasoning. 
+```{r}
+oa <-  oa %>% 
+  mutate(mean_rate_transf = 1/mean_rate)  %>%
+  filter(mean_rate_transf > 5, mean_rate_transf <  31)
+
+
+```
+
+7. Define model 
+```{r}
+hyp.mod.oa =  lmer(PC1 ~ category * (participant_gender + moraPositionFactor  + complex  +  c.(mean_rate_transf)) +  final_pause +  prev_c_tongue + (1 | Speaker) + (1  | word.alt.format), data=oa, REML=F)
+ 
+```
+
+8. Check VIFs 
+```{r}
+display_vif(hyp.mod.oa)  
+```
+
+9. Table of model results 
+```{r}
+lmer_table_oa = format_lmer_table(hyp.mod.oa)
+knitr::kable(lmer_table_oa, caption="Model of oa uPC1")
+```
+
+10. Get speaker intercepts, save as .csv
+```{r}
+speaker_intercepts_oa <- ranef(hyp.mod.oa)$Speaker
+
+speaker_intercepts_oa_df <- data.frame(Speaker = rownames(speaker_intercepts_oa), Intercept = speaker_intercepts_oa[, 1])
+
+speaker_intercepts_oa_df <- speaker_intercepts_oa_df %>% 
+  mutate(sequence = "oa" )
+
+write.csv(speaker_intercepts_oa_df, here("public", "Data", "speaker_intercepts_oa.csv"))
+```
+
+
+11. Investigate significant effects
+a) Is there evidence of an overall category effect?
+```{r}
+hyp.mod.oa.min.cat <- update(hyp.mod.oa, ~ . - category - category:participant_gender - category:moraPositionFactor - category:complex - category:c.(mean_rate_transf))
+anova(hyp.mod.oa, hyp.mod.oa.min.cat) 
+```
+
+Yep, there is.
+
+b) Investigating category differences with an EMM test 
+```{r}
+emmeans(hyp.mod.oa, pairwise ~ category)
+```
+
+No significant differences, suggests category effect lies in the interactions  
+
+c) Investigating further by conducting an EMM test on the interaction of category and gender 
+```{r}
+emmeans(hyp.mod.oa, pairwise ~  participant_gender |category) 
+```
+
+Significant differences in the L1 + L2 categories.
+
+d) Is there an overall effect of mora position?
+```{r}
+hyp.mod.oa.min.moraPos <- update(hyp.mod.oa, ~ . - moraPositionFactor - category:moraPositionFactor)
+anova(hyp.mod.oa, hyp.mod.oa.min.moraPos)
+```
+
+yes. 
+
+e) Investigate interaction with category further by conducting an EMM test
+```{r}
+emmeans(hyp.mod.oa, pairwise ~ moraPositionFactor| category) 
+```
+
+No significant differences between mora positions within any category. 
+
+## /ua/ regression model
+1. Read in data, create phonological form trackers
+```{r}
+ua = read.csv(here("public", "Data", "ua_PC_results_local_rate.csv"), header=TRUE, encoding="UTF-8", row.names=1) %>%
+  # merge pause data
+  left_join(
+    read.csv(here("public", "Data", "pause_info.csv"), header=TRUE, encoding="UTF-8", row.names=1),
+    by = "MatchId"
+  ) %>%
+  mutate(
+    phon.word = word %>% 
+      str_replace("([AEIOU])\\1", "\\1") %>%
+      str_replace(fixed("wh"), "f") %>%
+      str_replace(fixed("ng"), "N"),
+    prev_c = str_extract(phon.word, ".(?=ua)"),
+    prev_c_tongue = case_when(
+      prev_c %in% c("p", "m", "f", "h") ~ "neutral",
+      prev_c %in% c("t", "n", "r") ~ "coronal",
+      prev_c %in% c("k", "N", "w") ~ "dorsal"
+    )
+  )
+```
+
+
+2. Set up factors as required
+```{r}
+ua = ua %>%
+  mutate(
+    category = factor(category, levels=c("Historical", "PresentElder", "L1", "L2")),
+    stress = factor(stress == "yes"),
+    participant_gender = factor(participant_gender, levels=c("M", "F")),
+    complex = factor(complex == "yes"),
+    final = factor(final == "TRUE"),
+    prev_c_tongue = factor(prev_c_tongue, levels=c("neutral", "coronal", "dorsal")),
+    moraPositionFactor = ifelse(moraPosition > 2, "3+", moraPosition),
+    moraPositionFactor = factor(moraPositionFactor, levels=c("1", "2", "3+")))
+```
+
+3. Set up contrasts for factors 
+```{r}
+contrasts(ua$category) = matrix(c(c(-1,1,0,0)/2, c(-1,-1,1,1)/2, c(0,0,-1,1)/2), ncol=3)
+colnames(contrasts(ua$category)) = c("|PresentElder.v.Historical", "|L1L2.v.HistoricalPresentElder", "|L2.v.L1")
+contrasts(ua$stress) = contr.helmert(2)
+colnames(contrasts(ua$stress)) = c("|y.v.n")
+contrasts(ua$participant_gender) = contr.helmert(2)
+colnames(contrasts(ua$participant_gender)) = c("|F.v.M")
+contrasts(ua$complex) = contr.helmert(2)
+colnames(contrasts(ua$complex)) = c("|y.v.n")
+contrasts(ua$final) = contr.helmert(2)
+colnames(contrasts(ua$final)) = c("|y.v.n")
+contrasts(ua$prev_c_tongue) = contr.treatment(3) - 1/3
+colnames(contrasts(ua$prev_c_tongue)) = c("|coronal.v.neutral", "|dorsal.v.neutral")
+contrasts(ea$moraPositionFactor) <- contr.treatment(3)
+```
+
+4. Bin pause data 
+```{r}
+  ua = ua %>%
+  mutate(
+    pause_bin = factor(pause_length > 0.25, levels=c(FALSE, TRUE)) )  
+```
+
+5. Set up final_pause annotations and define contrasts
+```{r}
+  ua <- ua %>% 
+  mutate(final_pause  = case_when(
+    final == TRUE & pause_bin == TRUE ~ TRUE,
+    final == TRUE & pause_bin == FALSE ~ FALSE,
+    final == FALSE & pause_bin == TRUE ~ FALSE,
+    final == FALSE & pause_bin == FALSE ~ FALSE,
+  ))
+
+contrasts(ua$final_pause) = contr.helmert(2)
+colnames(contrasts(ua$final_pause)) = c("|y.v.n")
+```
+
+
+6. Inverse transform  `mean_rate`, then remove potential leverage points <= 5  > 31, see /ia/ section for reasoning.
+```{r}
+ua <-  ua %>% 
+  mutate(mean_rate_transf = 1/mean_rate)  %>%
+  filter(mean_rate_transf > 5, mean_rate_transf <  31)
+```
+
+7. Flip the polarity of the PC1 scores so that they match the others
+```{r}
+ua$PC1 = -1*(ua$PC1)
+```
+
+8. Define model
+```{r}
+ hyp.mod.ua =  lmer(PC1 ~ category * (participant_gender+  complex +  c.(mean_rate_transf)) +   final_pause  + prev_c_tongue + (1   | Speaker) + (1 | word.alt.format), data=ua, REML=F)
+```
+
+9. Check VIFs 
+```{r}
+display_vif(hyp.mod.ua)  
+```
+
+10.  Table of model results 
+```{r}
+lmer_table_ua = format_lmer_table(hyp.mod.ua)
+knitr::kable(lmer_table_ua, caption="Model of ua uPC1")
+```
+
+11. Get speaker intercepts, save as .csv
+```{r}
+speaker_intercepts_ua <- ranef(hyp.mod.ua)$Speaker
+
+speaker_intercepts_ua_df <- data.frame(Speaker = rownames(speaker_intercepts_ua), Intercept = speaker_intercepts_ua[, 1])
+
+speaker_intercepts_ua_df <- speaker_intercepts_ua_df %>% 
+  mutate(sequence = "ua" )
+
+write.csv(speaker_intercepts_ua_df, here("public", "Data", "speaker_intercepts_ua.csv"))
+```
+
+12. Investigate significant effects
+a) Is there evidence of an overall category effect?
+
+```{r}
+hyp.mod.ua.min.cat <- update(hyp.mod.ua, ~ . - category - category:participant_gender -  - category:complex - category:c.(mean_rate_transf))
+anova(hyp.mod.ua, hyp.mod.ua.min.cat)
+```
+
+Yes there is. 
+b) Investigating category differences with an EMM test 
+```{r}
+emmeans(hyp.mod.ua, pairwise ~ category)
+```
+
+Only significant differences between historical and present elders (already captured by model terms)
+
+c) Investigating further by conducting an EMM test on the interaction of category and gender 
+```{r}
+emmeans(hyp.mod.ua, pairwise ~  participant_gender |category) 
+```
+
+Significant gender difference in younger speakers only. 
+## Marginal effects plots
+```{r}
+ oa$category <- factor(oa$category,
+                                       levels = c("Historical", "PresentElder", "L1", "L2"),
+                                    labels = c("Historical elders", "Present elders", "Young L1", "Young L2"))
+
+
+ ua$category <- factor(ua$category,
+                                       levels = c("Historical", "PresentElder", "L1", "L2"),
+                                    labels = c("Historical elders", "Present elders", "Young L1", "Young L2"))
+ 
+ 
+ hyp.mod.oa_renamed =  lmer(PC1 ~ category * (participant_gender + moraPositionFactor  + complex  +  c.(mean_rate_transf)) +  final_pause +  prev_c_tongue + (1 | Speaker) + (1  | word.alt.format), data=oa, REML=F)
+ 
+  hyp.mod.ua_renamed =  lmer(PC1 ~ category * (participant_gender+  complex + moraPositionFactor + c.(mean_rate_transf)) +   final_pause  + prev_c_tongue + (1   | Speaker) + (1 | word.alt.format), data=ua, REML=F)
+```
+###  Category and gender effects  (Manuscript §4.2.1)
+
+#### /oa/ and /ua/ category * gender  (Manuscript  Figure 7)
+1. Rename factor levels so that the labels are more informative 
+
+
+2. Define plots
+```{r}
+
+PC1_CatGenderoa  <- plot_model(hyp.mod.oa_renamed, type = "pred", terms = c("category", "participant_gender"), 
+      title = "/oa/", axis.title = c(NULL, "uPC1 score: hiatus-like ↔ diphthong-like"), show.legend = F)+  
+ labs(
+    x = "Speaker Category",  
+  ) +
+scale_color_manual(
+     values = c("M" = "#1F78B4", "F" = "#E31A1C"),  
+     labels = c("M" = "Men", "F" = "Women")       
+   ) +
+ theme_minimal()
+
+
+
+PC1_CatGenderua <- plot_model(hyp.mod.ua_renamed, type = "pred", terms = c("category", "participant_gender"), 
+      title = "/ua/", axis.title = c(NULL, "uPC1 score: hiatus-like ↔ diphthong-like"))+
+   labs(
+    x = "Speaker Category",   
+    color = "Speaker Gender"  
+  )+
+scale_color_manual(
+     values = c("M" = "#1F78B4", "F" = "#E31A1C"), # Optional: specify colors
+     labels = c("M" = "Men", "F" = "Women")       # Update labels for legend
+   ) +
+ theme_minimal() + theme(legend.position="bottom")
+```
+
+3. Combine plots and save
+
+```{r}
+CatGendercombined <- cowplot::plot_grid(PC1_CatGenderoa, PC1_CatGenderua,  
+                            labels = c("a", "b"), ncol = 1, align = "c", axis = "l")
+
+CatGendercombined  
+ggsave(here("public", "Figures", "RegressionAnalysis", "CatGendercombined.png"),  CatGendercombined, width = 5, height = 9, bg = 'white')
+
+```
+
+#### /ia/ category and gender  (Manuscript  Figure 8 and 9)
+
+1. Rename factor levels so that the labels are more informative 
+```{r}
+ ia$category <- factor(ia$category,
+                                       levels = c("Historical", "PresentElder", "L1", "L2"),
+                                    labels = c("Historical elders", "Present elders", "Young L1", "Young L2"))
+
+ia$participant_gender <- factor(ia$participant_gender, 
+                                       levels = c("M", "F"), 
+                                       labels = c("Men", "Women"))
+
+hyp.mod.ia_renamed = lmer(PC1 ~ category * (participant_gender + moraPositionFactor + complex +  c.(mean_rate_transf)) + final_pause + prev_c_tongue + (1 | Speaker) + (1  | word.alt.format), data=ia, REML=F)
+```
+
+2. Define plots 
+
+```{r}
+PC1_Genderia <- plot_model(hyp.mod.ia_renamed, type = "pred", terms = c( "participant_gender"), 
+           title = " ", axis.title = c("Speaker Gender", "uPC1 score: hiatus-like ↔ diphthong-like")) +
+   theme_minimal()
+
+
+
+PC1_Categoryia <- plot_model(hyp.mod.ia_renamed, type = "pred", terms = c( "category"), 
+           title = " ", axis.title = c("Speaker Category" , "uPC1 score: hiatus-like ↔ diphthong-like")) +
+   theme_minimal()
+
+ 
+ 
+```
+
+
+3. Save 
+
+```{r}
+ggsave(here("public", "Figures", "RegressionAnalysis", "iaPC1Cat.png"),  PC1_Categoryia, height = 10, width = 15, units = "cm", bg = 'white') 
+
+ggsave(here("public", "Figures", "RegressionAnalysis", "iaPC1Gender.png"),  PC1_Genderia, height = 10, width = 15, units = "cm", bg = 'white')
+
+
+
+```
+
+#### /ia/ and /oa/ category* mora position  (Manuscript  Figure 10)
+
+1. Define plots
+```{r}
+
+ PC1_CatMoraPosia <- plot_model(hyp.mod.ia_renamed, type = "pred", terms = c("category", "moraPositionFactor"), 
+           title = "/ia/", axis.title = c( "uPC1 score: hiatus-like ↔ diphthong-like"), show.legend = F)+
+   labs(
+    x = "Speaker Category",   
+    color = "Mora position" 
+  )+
+  scale_color_manual(values = c("1" = "#33A02C", "2" = "#FF7F00", "3+" = "#6A3D9A")) + 
+ theme_minimal()
+
+
+PC1_CatMoraPosoa <- plot_model(hyp.mod.oa_renamed, type = "pred", terms = c("category", "moraPositionFactor"), 
+           title = "/oa/", axis.title = c("category", "uPC1 score: hiatus-like ↔ diphthong-like"))+
+   labs(
+    x = "Speaker Category",   
+    color = "Mora position"  
+  )+
+  scale_color_manual(values = c("1" = "#33A02C", "2" = "#FF7F00", "3+" = "#6A3D9A")) + 
+ theme_minimal() + theme(legend.position="bottom")
+```
+
+2. Combine
+```{r}
+
+plots_combined_mora <- cowplot::plot_grid(PC1_CatMoraPosia, PC1_CatMoraPosoa, 
+                            labels = c("a", "b"), ncol = 1, align = "c", axis = "l")
+
+
+ 
+plots_combined_mora
+ 
+```
+
+3. Save 
+
+```{r}
+  
+ggsave(here("public", "Figures", "RegressionAnalysis", "CatMoracombined.png"),  plots_combined_mora, width = 5, height = 9, bg = 'white')
+
+
+```
+
+
+#### /ea/ category* morpheme boundary  (Manuscript  Figure 11 )
+
+
+1. Rename factor levels so that the labels are more informative 
+```{r}
+ ea$category <- factor(ea$category,
+                                       levels = c("Historical", "PresentElder", "L1", "L2"),
+                                 labels = c("Historical elders", "Present elders", "Young L1", "Young L2"))
+
+hyp.mod.ea_renamed <-  lmer(PC1 ~ category * (participant_gender +   complex   +c.(mean_rate_transf) ) + final_pause +    prev_c_tongue + (1   | Speaker) + (1  | word.alt.format), data=ea, REML=F) 
+```
+
+
+```{r}
+PC1_CatComplexea <- plot_model(hyp.mod.ea_renamed, type = "pred", terms = c("category", "complex"), 
+            title = " ", axis.title = c("Speaker Category", "uPC1 score: hiatus-like ↔ diphthong-like"), 
+          legend.title="morpheme boundary") +
+  scale_color_manual(values = c("TRUE" = "#018F77", "FALSE" = "#f37735")) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom")
+
+PC1_CatComplexea
+
+
+ggsave(here("public", "Figures", "RegressionAnalysis", "eaPC1CatComplex.png"),  PC1_CatComplexea, height = 10, width = 15, units = "cm", bg = 'white')
+
+```
+
+#### /ua/ morpheme boundary  (Manuscript  Figure 12 )
+```{r}
+ ua$complex <- factor(ua$complex, levels = c("FALSE", "TRUE"))
+
+```
+
+```{r}
+PC1_Complexua <-  plot_model(hyp.mod.ua, type = "pred", terms = c("complex"), 
+            title = " ", axis.title = c("morpheme boundary", "uPC1 score: hiatus-like ↔ diphthong-like")) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom")
+
+PC1_Complexua
+
+ggsave(here("public", "Figures", "RegressionAnalysis", "uaPC1Complex.png"),  PC1_Complexua, height = 10, width = 15, units = "cm", bg = 'white')
+
+```
+
+
+
+# Speaker intercept analysis (Manuscript §4.3.1)  {#sec-speaker-intercepts}
+
+## Plot showing distribution of uPC results per speaker (Manuscript Figure 13)
+
+This plot uses a data frame created in  @sec-uPCA-vis.
+
+1. Filter out mid tokens, count number of high and low uPC1 tokens.
+
+```{r}
+per_speaker_PC_results <- results_extreme_all %>% 
+  filter(PC1cat != "mid") %>% 
+  select(MatchId, Speaker, PC1cat, sequence) %>% 
+  group_by(Speaker, sequence, PC1cat) %>% 
+  count()
+```
+
+2.  Only include speakers who have all 4 sequences
+```{r}
+per_speaker_PC_results <- per_speaker_PC_results %>% 
+  group_by(Speaker) %>%
+  filter(n_distinct(sequence) == 4) %>% 
+  ungroup()
+```
+
+3. Order data, with speakers with most low scoring tokens first
+```{r}
+speaker_order <- per_speaker_PC_results %>%
+  group_by(Speaker) %>%
+  mutate(total_n = sum(n)) %>%
+  filter(PC1cat == "low") %>%
+  summarise(prop_low = sum(n) / first(total_n)) %>%
+  arrange(desc(prop_low)) %>%
+  pull(Speaker)
+
+per_speaker_PC_results$Speaker <- factor(per_speaker_PC_results$Speaker, levels = speaker_order)
+```
+
+4. Adjust order of sequences
+```{r}
+per_speaker_PC_results$sequence <- factor(per_speaker_PC_results$sequence, levels = c("ia", "ea", "oa", "ua"))
+```
+
+5. Create plot + save
+```{r}
+per_speaker_plot <- ggplot(per_speaker_PC_results, aes(x = sequence, y = n, fill = PC1cat)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(y = " ", x = "sequence") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 8)) +
+   scale_fill_manual(name = "uPC1 Category", values = c("hi" = "#F8766D", "low" = "#00BFC4")) +
+  facet_wrap(~ Speaker, nrow = 5) +
+ theme(legend.position="bottom")
+ 
+per_speaker_plot
+ggsave(here("public", "Figures", "SpeakerInterceptAnalysis", "PC1ScoresPerSpeakerPerSeq.pdf"), per_speaker_plot, width = 30, height = 15, units = "cm")
+```
+
+## Speaker intercepts analysis + visualisation (Manuscript Figure 14)
+
+1. Read in data if need be 
+```{r}
+speaker_intercepts_ea <- read.csv(here("public", "Data", "speaker_intercepts_ea.csv")) %>% 
+  select(-X, -sequence) %>% 
+  rename(ea_speaker_intercept = Intercept)
+
+speaker_intercepts_ia <- read.csv(here("public", "Data", "speaker_intercepts_ia.csv")) %>% 
+  select(-X, -sequence) %>% 
+  rename(ia_speaker_intercept = Intercept)
+
+speaker_intercepts_oa <- read.csv(here("public", "Data", "speaker_intercepts_oa.csv")) %>% 
+   select(-X, -sequence) %>% 
+  rename(oa_speaker_intercept = Intercept)
+
+speaker_intercepts_ua <- read.csv(here("public", "Data", "speaker_intercepts_ua.csv")) %>% 
+  select(-X, -sequence) %>% 
+  rename(ua_speaker_intercept = Intercept)
+```
+
+2. Create combined data frame of all intercepts
+```{r}
+
+speaker_intercepts_all <- speaker_intercepts_ea %>%
+  left_join(speaker_intercepts_ia, by = "Speaker") %>%
+  left_join(speaker_intercepts_oa, by = "Speaker") %>%
+  left_join(speaker_intercepts_ua, by = "Speaker")
+
+write.csv(speaker_intercepts_all, here("public", "Data","opening_seqs_speaker_intercepts.csv"))
+
+```
+
+3. Define function for creating correlation plot. This is an adapted version of   the pairscor.fnc() function (used above) from the languageR() package [@languageR].
+It rounds p values <0.001 as such. 
+
+```{r}
+pairscor.fnc_custom  <- function(data, hist = TRUE, smooth = TRUE,
+  cex.points = 1, col.points = "darkgrey") {
+  panel.hist <- function(x, ...) {
+    usr <- graphics::par("usr"); on.exit(graphics::par(usr))
+    graphics::par(usr = c(usr[1:2], 0, 1.5) )
+    h <- hist(x, plot = FALSE)
+    breaks <- h$breaks; nB <- length(breaks)
+    y <- h$counts; y <- y/max(y)
+    graphics::rect(breaks[-nB], 0, breaks[-1], y, ...)
+  }
+
+  pairscor.lower <- function(x, y, ...) {
+    usr <- graphics::par("usr"); on.exit(graphics::par(usr))
+    graphics::par(usr = c(0, 1, 0, 1))
+    
+    # Pearson correlation
+    m = stats::cor.test(x, y)
+    r = round(m$estimate, 2)  # Show r with 2 decimal places
+    p = m$p.value
+    p_display = ifelse(p < 0.001, "<0.001", round(p, 6))  # Modify p-value for display
+    rtxt = paste("r =", r)
+    ptxt = paste("p =", p_display)
+
+    # Spearman correlation
+    options(warn=-1)  # ignore warnings
+    m2 = stats::cor.test(x, y, method="spearman")
+    r2 = round(m2$estimate, 2)  # Show rs with 2 decimal places
+    p2 = m2$p.value
+    p2_display = ifelse(p2 < 0.001, "<0.001", round(p2, 4))  # Modify p-value for display
+    rtxt2 = paste("rs =", r2)
+    ptxt2 = paste("p =", p2_display)
+    options(warn=0)
+
+    graphics::text(0.5, 0.8, rtxt)
+    graphics::text(0.5, 0.6, ptxt)
+    graphics::lines(c(0.2, 0.8), c(0.5, 0.5))
+    graphics::text(0.5, 0.4, rtxt2)
+    graphics::text(0.5, 0.2, ptxt2)
+  }
+
+  panel.smooth2 = function (x, y, col = graphics::par("col"), bg = NA, pch = graphics::par("pch"),
+    cex = 1, span = 2/3, iter = 3, ...) {
+    graphics::points(x, y, pch = pch, col = col, bg = bg, cex = cex)
+    ok <- is.finite(x) & is.finite(y)
+    if (any(ok))
+        graphics::lines(stats::lowess(x[ok], y[ok], f = span, iter = iter),
+            col = "black", ...)
+  }
+
+  if (hist == TRUE) {
+    if (smooth == TRUE) {
+	     graphics::pairs(data, 
+         diag.panel = panel.hist,
+         lower.panel = pairscor.lower, 
+         upper.panel = panel.smooth2, col = col.points,
+           cex = cex.points)
+    } else {
+       graphics::pairs(data, 
+         diag.panel = panel.hist,
+         lower.panel = pairscor.lower) 
+    }
+  } else {
+    if (smooth == TRUE) {
+	    graphics::pairs(data, lower.panel = pairscor.lower, 
+        upper.panel = panel.smooth2, col = col.points,
+        cex = cex.points)
+    } else {
+	    graphics::pairs(data, lower.panel = pairscor.lower) 
+    }
+  }
+}
+```
+
+4. Create plot + save
+
+```{r}
+ 
+pdf(here("public", "Figures", "SpeakerInterceptAnalysis",  "SpeakerInterceptCorrelation.pdf"), width = 7, height = 5)
+
+ 
+pairscor.fnc_custom(select(speaker_intercepts_all, ia_speaker_intercept, ea_speaker_intercept, oa_speaker_intercept, ua_speaker_intercept))
+
+# Close the device to save the plot
+dev.off()
+
+```
+# Speaker category visualisations (Manuscript §4.3.2) {#sec-category-vis}
+
+1. Data
+```{r}
+sequences = read.csv(here("public", "Data", "formants_filtered_all.csv"))  %>% 
+  dplyr::select(Vowel,  MatchId,  word, After.Match, category, participant_gender, time, Formant, Frequency, Target.vowelCluster.start, Target.vowelCluster.end)
+
+monophthongs = read.csv(here("public", "Data", "monophthongsfinal.csv"))
+```
+
+2. Some data prep 
+```{r}
+sequences$participant_gender = as.factor(sequences$participant_gender)
+sequences$category = as.factor(sequences$category)
+sequences$Vowel = as.factor(sequences$Vowel)
+
+sequences$category_gender = interaction(sequences$participant_gender, sequences$category)
+
+```
+
+3. View Data
+```{r}
+vowels <- sequences
+ 
+
+vowels %>%
+  head(10) %>%
+  kable() %>%
+  kable_styling(font_size = 11) %>%
+  scroll_box(width = "100%")
+
+```
+
+3. Some more data prep
+```{r}
+vowels <- vowels %>%
+  mutate(preceding = str_match(word, "(.*)[eiou]a")[,2] %>%
+           str_extract("(wh|ng|[^:]{0,1}:*)$") %>% 
+           str_remove_all(":") %>%
+           factor(),
+         following = str_match(word, "[eiou]a(.*)")[,2] %>%
+           str_extract("^[-:]*(wh|ng|[^:]{0,1}:*)") %>% 
+           str_remove_all("[-:]") %>%
+           ifelse(.=="", 
+                  After.Match %>%
+                   str_to_lower() %>% 
+                   str_extract("^([<>~?:\"' ]|-)*(wh|ng|.{0,1})") %>%
+                   str_remove("[<>~?:\"' -]+") %>% 
+                   paste0("$", .),
+                 .) %>%
+           factor(),
+         time_left = exp(-(time-1)/1.5),
+         time_right = exp(-(9-time)/1.5),
+         duration = Target.vowelCluster.end - Target.vowelCluster.start,
+         preceding_category_gender = paste(preceding, category_gender) %>% factor(),
+         following_category_gender = paste(following, category_gender) %>% factor(),
+  ) %>%
+  group_by(MatchId) %>%
+  mutate(traj_start=time==min(time)) %>%
+  ungroup()
+```
+
+4. Nest data
+```{r}
+vowels <- vowels %>%
+    group_by(Vowel, Formant) %>%
+    nest()
+
+ 
+
+```
+5. Fit GAMs to the data
+```{r}
+vowels <- vowels %>%
+  mutate(
+    model = map(
+      data, # We are applying a function to the entries of the `data` column.
+      # This is the function we are applying (introduced with a ~)
+      ~ bam( 
+          # Here's our formula.
+          Frequency ~ 
+            category_gender +
+            s(time, by=category_gender, k=9) +
+            s(duration, k=9) + 
+            ti(time,duration,k=c(9,9)) +
+            s(time_left, preceding_category_gender, bs="re") +
+            s(time_right, following_category_gender, bs="re"),
+          data = .x,
+          method = 'fREML',
+          discrete = TRUE,
+          AR.start=.x$traj_start, rho=0.7
+        )
+      )
+  )
+```
+6. Get predictions
+```{r}
+to_predict <- list(
+  "time" = seq(from=1, to=9, by=1), # All years
+  "category_gender" =
+    c("M.L1","M.L2","M.Historical","M.PresentElder",
+      "F.L1","F.L2","F.Historical","F.PresentElder"
+    )
+)
+
+
+vowels <- vowels %>%
+  mutate(
+    prediction = map(
+      model, # This time we're applying the function to all the models.
+      # We again introduce the function with '~', and indicate where the model 
+      # goes with '.x'.
+      ~ get_predictions(model = .x, cond = to_predict, rm.ranef=T, print.summary = FALSE)
+    )
+  )
+```
+
+7. View predictions
+```{r}
+vowels$prediction[[1]] %>%
+    kable() %>%
+    kable_styling() %>%
+    scroll_box(width = "100%")
+
+```
+
+8. Unnest
+```{r}
+predictions <- vowels %>%
+  select(
+    Vowel, Formant, prediction
+  ) %>%
+  unnest(prediction)   
+
+predictions %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+ 
+```
+
+9. Format predictions
+```{r}
+predictions <- predictions %>%
+   select( # Remove unneeded variables
+     -CI, -duration, -time_left, -time_right, -preceding_category_gender, -following_category_gender, -rm.ranef
+   ) %>%
+  pivot_wider( # Pivot
+    names_from = Formant,
+    values_from = fit
+  )
+
+predictions %>%
+  head() %>%
+  kable() %>%
+  kable_styling() %>%
+  scroll_box(width = "100%")
+
+predictions <- predictions %>%
+  mutate(category = str_remove(category_gender, ".*[.]"),
+         participant_gender = str_remove(category_gender, "[.].*"),)
+
+```
+
+10. Prepare data sets for each speaker category
+```{r}
+PresentElderseq = predictions %>%
+    filter(category == "PresentElder")
+Historicalseq = predictions %>%
+    filter(category == "Historical")
+L1seq = predictions %>%
+    filter(category == "L1")
+L2seq = predictions %>%
+    filter(category == "L2")
+
+PresentEldermono = monophthongs %>%
+    filter(category == "PresentElder")
+Historicalmono = monophthongs %>%
+    filter(category == "Historical")
+L1mono = monophthongs %>%
+    filter(category == "L1")
+L2mono = monophthongs %>%
+    filter(category == "L2")
+
+presentfirst_obs <- PresentElderseq %>%
+    group_by(Vowel, participant_gender) %>%
+    slice(which.min(time))
+histfirst_obs <- Historicalseq %>%
+    group_by(Vowel, participant_gender) %>%
+    slice(which.min(time))
+L1first_obs <- L1seq %>%
+    group_by(Vowel, participant_gender) %>%
+    slice(which.min(time))
+L2first_obs <- L2seq %>%
+    group_by(Vowel, participant_gender) %>%
+    slice(which.min(time))
+ 
+```
+
+##Historical elders plot
+
+1. Calculate the mean for each vowel to annotate ellipses on plot 
+```{r}
+Hist_i_means <- Historicalmono %>% 
+  filter(Target.teAkaSegment == "i") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+Hist_e_means <- Historicalmono %>% 
+  filter(Target.teAkaSegment == "e") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+Hist_a_means <- Historicalmono %>% 
+  filter(Target.teAkaSegment == "a") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+Hist_o_means <- Historicalmono %>% 
+  filter(Target.teAkaSegment == "o") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+
+Hist_u_means <- Historicalmono %>% 
+  filter(Target.teAkaSegment == "u") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+Historicalmono_means <- rbind(Hist_i_means, Hist_e_means, Hist_a_means, Hist_o_means, Hist_u_means) %>% 
+  rename(F1_lobanov_2.0 = meanF1) %>% 
+  rename(F2_lobanov_2.0 = meanF2)
+```
+
+2. Create plot 
+```{r}
+ 
+hist_plot <- Historicalmono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+ stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+  geom_text(data=Historicalmono_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 3) +
+  geom_path(data=Historicalseq, aes(
+      x = F2_lobanov_2.0,
+      y = F1_lobanov_2.0,
+      colour = Vowel), arrow = arrow(length = unit(2, "mm")), show.legend = FALSE) +
+    geom_label(
+    data = histfirst_obs,
+    aes(
+      x = F2_lobanov_2.0,
+      y = F1_lobanov_2.0,
+      colour = Vowel, label=Vowel), 
+    show.legend = FALSE,
+    size = 2.5, # Make labels smaller...
+    alpha = 0.7 # ...and slightly transparent.
+  )   
+
+hist_gender <- hist_plot +   labs(title = "Historical elders")  + facet_grid(~ participant_gender)   + theme_classic()+
+theme( text = element_text(size = 8))
+
+hist_gender
+  
+```
+
+
+
+## Present elders plot
+
+1. Calculate the mean for each vowel to annotate ellipses on plot 
+
+```{r}
+PE_i_means <- PresentEldermono %>% 
+  filter(Target.teAkaSegment == "i") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+PE_e_means <- PresentEldermono %>% 
+  filter(Target.teAkaSegment == "e") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+PE_a_means <- PresentEldermono %>% 
+  filter(Target.teAkaSegment == "a") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+PE_o_means <- PresentEldermono %>% 
+  filter(Target.teAkaSegment == "o") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+
+PE_u_means <- PresentEldermono %>% 
+  filter(Target.teAkaSegment == "u") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+PresentEldermono_means <- rbind(PE_i_means, PE_e_means, PE_a_means, PE_o_means, PE_u_means) %>% 
+  rename(F1_lobanov_2.0 = meanF1) %>% 
+  rename(F2_lobanov_2.0 = meanF2)
+```
+
+2. Create plot 
+```{r}
+present_plot <- PresentEldermono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+ stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+    geom_text(data= PresentEldermono_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 3) +
+  geom_path(data=PresentElderseq, aes(
+      x = F2_lobanov_2.0,
+      y = F1_lobanov_2.0,
+      colour = Vowel), arrow = arrow(length = unit(2, "mm")), show.legend = FALSE) +
+    geom_label(
+    data = presentfirst_obs,
+    aes(
+      x = F2_lobanov_2.0,
+      y = F1_lobanov_2.0,
+      colour = Vowel, label=Vowel), 
+    show.legend = FALSE,
+    size = 2.5, # Make labels smaller...
+    alpha = 0.7 # ...and slightly transparent.
+  )
+
+present_gender <- present_plot + labs(title = "Present elders") + facet_grid(~ participant_gender)    + theme_classic()+
+theme( text = element_text(size = 8))
+
+present_gender
+
+```
+
+
+## L1 plot
+1. Calculate the mean for each vowel to annotate ellipses on plot 
+```{r}
+L1_i_means <- L1mono %>% 
+  filter(Target.teAkaSegment == "i") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+L1_e_means <- L1mono %>% 
+  filter(Target.teAkaSegment == "e") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+L1_a_means <- L1mono %>% 
+  filter(Target.teAkaSegment == "a") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+L1_o_means <- L1mono %>% 
+  filter(Target.teAkaSegment == "o") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+
+L1_u_means <- L1mono %>% 
+  filter(Target.teAkaSegment == "u") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+L1mono_means <- rbind(L1_i_means, L1_e_means, L1_a_means, L1_o_means, L1_u_means) %>% 
+  rename(F1_lobanov_2.0 = meanF1) %>% 
+  rename(F2_lobanov_2.0 = meanF2)
+```
+
+2. Create plot 
+
+```{r}
+L1_plot <- L1mono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+ stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+   geom_text(data=L1mono_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 3) +
+  geom_path(data=L1seq, aes(
+      x = F2_lobanov_2.0,
+      y = F1_lobanov_2.0,
+      colour = Vowel), arrow = arrow(length = unit(2, "mm")), show.legend = FALSE) +
+    geom_label(
+    data = L1first_obs,
+    aes(
+      x = F2_lobanov_2.0,
+      y = F1_lobanov_2.0,
+      colour = Vowel, label=Vowel), 
+    show.legend = FALSE,
+    size = 2.5, # Make labels smaller...
+    alpha = 0.7 # ...and slightly transparent.
+  ) 
+
+L1_gender <- L1_plot + labs(title = "Young L1")  + facet_grid(~ participant_gender) + theme_classic()+
+theme( text = element_text(size = 8))
+  
+L1_gender
+```
+
+## L2 plot
+1. Calculate the mean for each vowel to annotate ellipses on plot 
+```{r}
+L2_i_means <- L2mono %>% 
+  filter(Target.teAkaSegment == "i") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+L2_e_means <- L2mono %>% 
+  filter(Target.teAkaSegment == "e") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+L2_a_means <- L2mono %>% 
+  filter(Target.teAkaSegment == "a") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+L2_o_means <- L2mono %>% 
+  filter(Target.teAkaSegment == "o") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+
+L2_u_means <- L2mono %>% 
+  filter(Target.teAkaSegment == "u") %>% 
+  mutate(meanF1 = mean(F1_lobanov_2.0)) %>% 
+  mutate(meanF2 = mean(F2_lobanov_2.0)) %>% 
+  select(Target.teAkaSegment, meanF1, meanF2) %>% 
+  unique()
+  
+L2mono_means <- rbind(L2_i_means, L2_e_means, L2_a_means, L2_o_means, L2_u_means) %>% 
+  rename(F1_lobanov_2.0 = meanF1) %>% 
+  rename(F2_lobanov_2.0 = meanF2)
+```
+
+2. Create plot 
+```{r}
+L2_plot <- L2mono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+ stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.05, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+  geom_text(data=L2mono_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 3) +
+  geom_path(data=L2seq, aes(
+      x = F2_lobanov_2.0,
+      y = F1_lobanov_2.0,
+      colour = Vowel), arrow = arrow(length = unit(2, "mm")), show.legend = FALSE) +
+    geom_label(
+    data = L2first_obs,
+    aes(
+      x = F2_lobanov_2.0,
+      y = F1_lobanov_2.0,
+      colour = Vowel, label=Vowel), 
+    show.legend = FALSE,
+    size = 2.5, # Make labels smaller...
+    alpha = .7 # ...and slightly transparent.
+  )
+
+L2_gender <- L2_plot + labs(title = "Young  L2")  +facet_grid(~ participant_gender)  + theme_classic() +
+theme( text = element_text(size = 8))
+
+L2_gender
+ 
+```
+
+## Combined plot (Manuscript Figure 15 )
+
+```{r}
+plots_combined <- cowplot::plot_grid(hist_gender, present_gender, 
+                                     L1_gender, L2_gender,
+                            labels = c("a", "b", "c", "d"), label_size = 10, ncol = 2, align = "c", axis = "l")
+
+
+ 
+plots_combined 
+
+
+ggsave(here("public", "Figures", "ChangeOverTime", "combined_plots_change.pdf"), width = 22, height = 14, units = "cm")
+
+
+```
+
+
