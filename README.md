@@ -6,8 +6,7 @@ Kirsten Culhane, Jen Hay, Simon Todd, Márton Sóskuthy, Allie Osborne, Penny Ha
 
 ## How to use this repository
 
-This repository contains the code and data  for "". 
-
+This repository contains the code and data  for "Variation in the production of te reo Māori opening vowel sequences: Supplementary Materials". 
 
 
 There are two primary ways to use this repository:
