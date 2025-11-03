@@ -137,22 +137,25 @@ This markdown file contains supplementary materials for the manuscript "Variatio
 
 -  @sec-data-select-annotate-filter outlines the data selection and annotation procedure 
 
-- @sec-measure-filter contains the code for measuring formats, pitch, intensity, and for for filtering the data laid out in §3.3 of the manuscript.  This section contains a number of non-executable chunks, some of which require a LaBB-CAT account to run. They have been included for archiving purposes. 
+- @sec-measure-filter contains the code for measuring formats, pitch, intensity, and for for filtering the data laid out in §3.3 of the manuscript.  This section contains a number of non-executable chunks, some of which require a LaBB-CAT account to run. They have been included for archiving purposes.
 
-- @sec-fCPA contains the code for the fPCA analysis, which is described in §3.4 of the manuscript
+-  @sec-filtered-out-data explores how many data points are lost by our filtering process, which is reported in Footnote 3, 4 and 5. 
+
+- @sec-fCPA contains the code for the fPCA analysis. which is described in §3.4 of the manuscript and  relevant results reported in Appendix A
 
 - @sec-dur-filter contains the code for filtering the duration data, which is described in §3.3.3 of the manuscript
 
 - @sec-uCPA contains the code for the uPCA analysis and visualizations, which are presented in §4.1 of the manuscript
 
-- @sec-tangent examines the possibility  that speakers with predominantly high uPC1 scores and predominantly low uPC1 scores have different monophthong spaces, and
-that the different trajectory we see between high and low uPC1 tokens are actually a reflection of these differences (Footnote 1 of the manuscript)
+- @sec-tangent examines the possibility that speakers with predominantly high uPC1 scores and predominantly low uPC1 scores have different monophthong spaces, and that the different trajectory we see between high and low uPC1 tokens are actually a reflection of these differences (Footnote 7 of the manuscript)
 
 - @sec-regression  contains the code for the regression analysis and visualizations, which are presented in §4.2 of the manuscript
 
 - @sec-speaker-intercepts contains the code for the speaker intercept analysis, which is described in §4.3.1 of the manuscript
 
 - @sec-category-vis contains  code for the visualizations of monophthongs and sequence trajectories, plotted per speaker category, which are presented in §4.3.2 of the manuscript
+
+-  @sec-ia-ea-merge examines the possibility that  there a relationship between raising of /e/  and merging of /ia/ and /ea/ in Māori, which is disscussed in §4.3.2 of the manuscript
 
 # Libraries {#sec-data-packages}
 
@@ -1166,8 +1169,8 @@ as described in §3.3.2 of the manuscript.
 1. Read in data
 
 ```{r, eval=FALSE}
-pitch <- read.csv(here("public", "Data","pitch_centered_per_speaker_nofilter.csv"))
-int <- read.csv(here("public", "Data","intcentered_per_speaker.csv"))
+pitch <- read.csv(here("OpeningSeqsSupp", "public", "Data","pitch_centered_per_speaker_nofilter.csv"))
+int <- read.csv(here("OpeningSeqsSupp", "public", "Data","intcentered_per_speaker.csv"))
 
 sequences <- read.csv(here("public", "Data", "opening_seqs_selected_data.csv"))
 
@@ -1692,15 +1695,15 @@ for (v in unique(vowels$Vowel)) {
 ### Combine filtered data
 1. Read data in if need be
 ```{r, eval=FALSE}
-pitch_filtered_ea <- read.csv(here("public", "Data", "Filtered", "Pitch", "ea.csv"))
-pitch_filtered_ia <- read.csv(here("public", "Data", "Filtered", "Pitch", "ia.csv"))
-pitch_filtered_oa <- read.csv(here("public", "Data", "Filtered", "Pitch", "oa.csv"))
-pitch_filtered_ua <- read.csv(here("public", "Data", "Filtered", "Pitch", "ua.csv"))
+pitch_filtered_ea <- read.csv(here("OpeningSeqsSupp", "public", "Data", "Filtered", "Pitch", "ea.csv"))
+pitch_filtered_ia <- read.csv(here("OpeningSeqsSupp","public", "Data", "Filtered", "Pitch", "ia.csv"))
+pitch_filtered_oa <- read.csv(here("OpeningSeqsSupp","public", "Data", "Filtered", "Pitch", "oa.csv"))
+pitch_filtered_ua <- read.csv(here("OpeningSeqsSupp","public", "Data", "Filtered", "Pitch", "ua.csv"))
 
-int_filtered_ea <- read.csv(here("public", "Data", "Filtered", "Int", "ea.csv"))
-int_filtered_ia <- read.csv(here("public", "Data", "Filtered", "Int", "ia.csv"))
-int_filtered_oa <- read.csv(here("public", "Data", "Filtered", "Int", "oa.csv"))
-int_filtered_ua <- read.csv(here("public", "Data", "Filtered", "Int", "ua.csv"))
+int_filtered_ea <- read.csv(here("OpeningSeqsSupp","public", "Data", "Filtered", "Int", "ea.csv"))
+int_filtered_ia <- read.csv(here("OpeningSeqsSupp","public", "Data", "Filtered", "Int", "ia.csv"))
+int_filtered_oa <- read.csv(here("OpeningSeqsSupp","public", "Data", "Filtered", "Int", "oa.csv"))
+int_filtered_ua <- read.csv(here("OpeningSeqsSupp","public", "Data", "Filtered", "Int", "ua.csv"))
 
 
 ```
@@ -1725,7 +1728,300 @@ write.csv(int_filtered_all, here("public", "Data", "int_filtered.csv"))
 
 ```
 
+# Data exploration: how many trajectories and time points were lost in the filtering process? {#sec-filtered-out-data}
 
+## Formants: missing trajectories
+1. Read in filtered formant trajectories if need be
+```{r}
+formants_filtered_all <- read.csv(here("public", "Data", "formants_filtered_all.csv"))
+```
+
+2. Label tokens which are included in the filtered data set
+```{r}
+filtered_formants_ids <-   formants_filtered_all %>% 
+  select(MatchId) %>% 
+  mutate(included_formants = "yes") %>% 
+  unique()
+ 
+```
+
+3. Get MatchIds for all tokens, combine with the ids for the filtered data set. Label tokens not included in the filtered data set 
+```{r}
+sequences <- read.csv(here("public", "Data", "opening_seqs_selected_data.csv"))
+
+all_formants_ids <- sequences %>% 
+   select(MatchId) %>% 
+unique() 
+
+all_formants_ids <- all_formants_ids %>% 
+  left_join(filtered_formants_ids) %>% 
+  mutate(included_formants = replace_na(included_formants, "no"))
+```
+
+4. Count number of tokens included and excluded
+```{r}
+formants_filtered_summary <- all_formants_ids %>% 
+  group_by(included_formants) %>% 
+  count()
+```
+## Formants: missing time points
+
+1. Group trajectories by number of time points
+```{r}
+filtered_formants_time_points <- formants_filtered_all %>% 
+  select(MatchId, time, category, Formant)  %>% 
+   unique() %>% 
+   group_by(category, Formant, MatchId) %>%
+summarise(n_timepoints = n_distinct(time), .groups = "drop") %>%
+  mutate(bucket = case_when(
+    n_timepoints <= 4 ~ "≤4",
+    n_timepoints == 5 ~ "5",
+    n_timepoints == 6 ~ "6",
+    n_timepoints == 7 ~ "7",
+    n_timepoints == 8 ~ "8",
+    n_timepoints == 9 ~ "9"
+  )) %>%
+  count(category, Formant, bucket)
+
+```
+
+2. Calculate what percentage of trajectories have fewer than 4 timepoints
+```{r}
+
+filtered_formants_time_points_overall <- formants_filtered_all %>% 
+  select(MatchId, time, Formant)  %>% 
+   group_by(Formant, MatchId) %>%
+ summarise(n_timepoints = n_distinct(time), .groups = "drop") %>%
+  group_by(Formant) %>%
+  summarise(
+    total_matches = n(),
+    fewer_than_4 = sum(n_timepoints <= 4),
+    pecentage_fewer_than_4 = fewer_than_4 / total_matches * 100,
+    all_9  = sum(n_timepoints == 9),
+    pecentage_all_9 = all_9 / total_matches * 100,
+  )
+
+
+```
+
+## Intensity: missing trajectories 
+1. Read in filtered intensity trajectories if need be
+```{r}
+ int_filtered_all <- read.csv(here("public", "Data", "int_filtered.csv"))
+
+```
+
+2. Label tokens which are included in the filtered data set
+```{r}
+filtered_int_ids <-   int_filtered_all %>% 
+  select(MatchId) %>% 
+  mutate(included_int = "yes") %>% 
+  unique()
+```
+
+3. Get MatchIds for all tokens, combine with the ids for the filtered data set. Label tokens not included in the filtered data set 
+```{r}
+all_int_ids <- int %>% 
+   select(MatchId) %>% 
+unique() 
+
+all_int_ids <- all_int_ids %>% 
+  left_join(filtered_int_ids) %>% 
+  mutate(included_int = replace_na(included_int, "no"))
+```
+
+4. Count number of tokens included and excluded
+```{r]}
+int_filtered_summary <- all_int_ids %>% 
+  group_by(included_int) %>% 
+  count()
+```
+
+## Intensity: missing time points
+1. Group trajectories by number of time points
+```{r}
+filtered_int_time_points <- int_filtered_all %>% 
+  select(MatchId, time, category)  %>% 
+   group_by(category, MatchId) %>%
+summarise(n_timepoints = n_distinct(time), .groups = "drop_last") %>%
+  mutate(bucket = case_when(
+     n_timepoints <= 3 ~ "≤3",
+    n_timepoints == 4 ~ "4",
+    n_timepoints == 5 ~ "5",
+    n_timepoints == 6 ~ "6",
+    n_timepoints == 7 ~ "7",
+    n_timepoints == 8 ~ "8",
+    n_timepoints == 9 ~ "9"
+  )) %>%
+  count(category, bucket)
+```
+
+2. Calculate what percentage of trajectories have fewer than 4 timepoints
+```{r}
+filtered_int_time_points_overall <- int_filtered_all %>% 
+  select(MatchId, time,)  %>% 
+   group_by(MatchId) %>%
+ summarise(n_timepoints = n_distinct(time), .groups = "drop_last") %>%
+  summarise(
+    total_matches = n(),
+    fewer_than_4 = sum(n_timepoints <= 4),
+    pecentage_fewer_than_4 = fewer_than_4 / total_matches * 100,
+    all_7  = sum(n_timepoints == 7),
+    pecentage_all_7 = all_7 / total_matches * 100,
+  )
+```
+
+## Pitch: missing trajectories
+1. Read in filtered pitch trajectories if need be
+```{r}
+pitch_filtered_all <- read.csv(here("public", "Data", "pitch_filtered.csv"))
+```
+
+2. Label tokens which are included in the filtered data set
+```{r}
+filtered_pitch_ids <-   pitch_filtered_all %>% 
+  select(MatchId) %>% 
+  mutate(included_pitch = "yes") %>% 
+  unique()
+```
+
+
+3. Get MatchIds for all tokens, combine with the ids for the filtered data set. Label tokens not included in the filtered data set 
+```{r}
+all_pitch_ids <- pitch %>% 
+   select(MatchId) %>% 
+unique() 
+
+all_pitch_ids <- all_pitch_ids %>% 
+  left_join(filtered_pitch_ids) %>% 
+  mutate(included_pitch = replace_na(included_pitch, "no"))
+```
+
+4. Count number of tokens included and excluded
+```{r}
+pitch_filtered_summary <- all_pitch_ids %>% 
+  group_by(included_pitch) %>% 
+  count()
+```
+
+## Pitch: missing time points
+1. Group trajectories by number of time points
+```{r}
+filtered_pitch_time_points <- pitch_filtered_all %>% 
+  select(MatchId, time, category)  %>% 
+   group_by(category, MatchId) %>%
+summarise(n_timepoints = n_distinct(time), .groups = "drop_last") %>%
+  mutate(bucket = case_when(
+    n_timepoints <= 4 ~ "≤4",
+    n_timepoints == 5 ~ "5",
+    n_timepoints == 6 ~ "6",
+    n_timepoints == 7 ~ "7",
+    n_timepoints == 8 ~ "8",
+    n_timepoints == 9 ~ "9"
+  )) %>%
+  count(category, bucket)
+```
+
+2. Calculate what percentage of trajectories have fewer than 4 timepoints
+```{r}
+filtered_pitch_time_points_overall <- pitch_filtered_all %>% 
+  select(MatchId, time,)  %>% 
+   group_by(MatchId) %>%
+ summarise(n_timepoints = n_distinct(time), .groups = "drop_last") %>%
+  summarise(
+    total_matches = n(),
+    fewer_than_4 = sum(n_timepoints <= 4),
+    pecentage_fewer_than_4 = fewer_than_4 / total_matches * 100,
+    all_7  = sum(n_timepoints == 7),
+    pecentage_all_7 = all_7 / total_matches * 100,
+  )
+``` 
+
+```{r}
+all_filtered_info <- all_formants_ids %>% 
+  left_join(all_int_ids, by = "MatchId") %>% 
+  left_join(all_pitch_ids, by = "MatchId")
+
+all_filtered_info %>% 
+  group_by(included_formants, included_int, included_pitch) %>% 
+  count()
+```
+
+## What relationship is there between trajectories with measurement points missing and forced alignment errors? 
+1. Read information about forced alignment errors
+```{r}
+forced_align_errors <- read.csv(here("public", "Data", "duration_URLs.csv")) %>% 
+  select(MatchId, error)
+
+```
+
+2. Label formant trajectory tokens for whether there is a forced alignment error
+```{r}
+formants_filtered_all <- left_join(formants_filtered_all, forced_align_errors) %>% 
+   mutate(error = ifelse(is.na(error) | error == "", "n", error))
+```
+
+3. Count n time points for tokens with and without forced  alignment errors
+```{r}
+filtered_formants_time_points_forcedalign <- formants_filtered_all %>% 
+  select(MatchId, time, error, Formant)  %>% 
+   unique() %>% 
+   group_by(error, Formant, MatchId) %>%
+summarise(n_timepoints = n_distinct(time), .groups = "drop") %>%
+  mutate(bucket = case_when(
+    n_timepoints <= 4 ~ "≤4",
+    n_timepoints == 5 ~ "5",
+    n_timepoints == 6 ~ "6",
+    n_timepoints == 7 ~ "7",
+    n_timepoints == 8 ~ "8",
+    n_timepoints == 9 ~ "9"
+  )) %>%
+  count(error, Formant, bucket)
+```
+
+4. Same for intensity
+```{r}
+int_filtered_all <- left_join(int_filtered_all, forced_align_errors) %>% 
+   mutate(error = ifelse(is.na(error) | error == "", "n", error))
+
+filtered_int_time_points_forcedalign <- int_filtered_all %>% 
+  select(MatchId, time, error)  %>% 
+   group_by(error, MatchId) %>%
+summarise(n_timepoints = n_distinct(time), .groups = "drop_last") %>%
+  mutate(bucket = case_when(
+     n_timepoints <= 3 ~ "≤3",
+    n_timepoints == 4 ~ "4",
+    n_timepoints == 5 ~ "5",
+    n_timepoints == 6 ~ "6",
+    n_timepoints == 7 ~ "7",
+    n_timepoints == 8 ~ "8",
+    n_timepoints == 9 ~ "9"
+  )) %>%
+  count(error, bucket)
+ 
+```
+
+5. Same for pitch
+```{r}
+pitch_filtered_all <- left_join(pitch_filtered_all, forced_align_errors) %>% 
+   mutate(error = ifelse(is.na(error) | error == "", "n", error))
+
+
+filtered_pitch_time_points_forcedalign <- pitch_filtered_all %>% 
+  select(MatchId, time, error)  %>% 
+   group_by(error, MatchId) %>%
+summarise(n_timepoints = n_distinct(time), .groups = "drop_last") %>%
+  mutate(bucket = case_when(
+     n_timepoints <= 3 ~ "≤3",
+    n_timepoints == 4 ~ "4",
+    n_timepoints == 5 ~ "5",
+    n_timepoints == 6 ~ "6",
+    n_timepoints == 7 ~ "7",
+    n_timepoints == 8 ~ "8",
+    n_timepoints == 9 ~ "9"
+  )) %>%
+  count(error, bucket)
+```
 
 # fPCA {#sec-fCPA}
 
@@ -2073,7 +2369,12 @@ rm(plot_PC1_f1,plot_PC2_f1,plot_PC3_f1,
 For each sequence and formant, more than 90% of variance observed was explained by at 
 least three fPCs.  As a result, three fPCs have been selected for F1 and F2.
 
-The modifications to the mean F1  and F2 curves by each fPC are similar for each sequence.  For F1 and F2, fPC1 explains the height and general shape of the mean curve.  fPC2 reveals different trends for F1 and F2.  For F1, fPC2 appears to explain the position of the peak: a high fPC2 score for F1 reflects a F1  peak in the middle of the sequence, while a low fPC2 score reflects a  F1 peak later in the sequence. For F2, fPC2 seems to captures how extreme the difference is between  the onset and offset of the sequence. Finally, fPC3 for both F1 and F2 concerns the transition  part of the sequence, in particular whether this has more of a concave or convex shape. For F1, a high fPC3 score reflects a more convex shape, with a central peak, while a low fPC3 score reflects a subtle concave dip in the middle of the sequence.  For F2, high fPC3 scores correspond to a subtle concave dip in the middle of the sequence, while low scores correspond to a subtle peak. 
+For F1 and F2, fPC1 explains the height and general shape of the mean curve. For F1, fPC2 appears to explain the position of the peak. A high score corresponds to a peak later in the sequence 
+and a low score corresponds to a peak earlier in the sequence. For /oa , the inverse is true:
+a high score corresponds to a peak earlier in the sequence and a low score corresponds to a peak later in the sequence.
+
+ F2, fPC2 seems to captures how extreme the difference is between  the onset and offset of the sequence. Finally, fPC3 for both F1 and F2 concerns the transition  part of the sequence, in particular whether this has more of a concave or convex shape. For F1, a high fPC3 score reflects a more convex shape, with a central peak, while a low fPC3 score reflects a subtle concave dip in the middle of the sequence.  For F2, high fPC3 scores correspond to a subtle concave dip in the middle of the sequence, while low scores correspond to a subtle peak. The inverse is the case for /ea/, where 
+low fPC3 scores correspond to a subtle concave dip and high scores correspond to a subtle peak.
 
 3. Create fPCA plots for pitch and intensity
 ```{r}
@@ -2109,6 +2410,194 @@ However, to align with the number of fPCs selected for F1 and F2, and to ensure 
 were also chosen for pitch and intensity.
 
 FPC1 captures overall  differences absolute in pitch and intensity. For pitch, fPC2 captures  the direction of the trajectory. High scores indicate a falling trajectory, while low scores correspond to a rising trajectory.  For intensity, fPC2 captures the shape of the trajectory. A high fPC2 score reflects a steep drop, whereas a low fPC1 score indicates a relatively stable intensity across the sequence.  For  pitch,  fPC3 captures  the extent to which the central part of the curve is convex or concave, with a high score corresponding to a convex curve, and a low score corresponding to a concave curve. 	For intensity,  fPC3  captures the extent to which there is a pronounced peak. A	high  fPC3 score indicates  a more pronounced peak,  while a low score reflects a gradual drop. 
+
+## Individual fPC plots for Appendix A 
+
+This is a slightly adapted version of the function which includes the sequence name in the title of the plots
+```{r}
+## MAIN FUNCTION: Generate a plot given a PC and formant (as integer ID)
+PlotPCs_caption = function(PC,fpca_type,sequence,fpca_name,flip_symbols=0){
+  
+  ## Create a working dataset
+  working_fpca = get(paste(fpca_name,"_fpca_",sequence,sep=""))[[fpca_type]]
+    
+  ## get variables from FPCA output
+  mean_curve = working_fpca$mu
+  PC_curve = working_fpca$phi[,PC]
+  PC_mod = PC_curve * sd(working_fpca$xiEst[,PC])
+  cum_var = working_fpca$cumFVE
+  
+  if (fpca_name == "form"){
+    time_start = 1
+    time_end = 9
+  } else {
+    time_start = 2
+    time_end = 8
+  }
+  
+  ## send to "MorePoints" function, get finer detail curves
+  mean_curve = MorePoints(mean_curve,time_start,time_end)
+  PC_curve = MorePoints(PC_curve,time_start,time_end)
+  PC_mod = MorePoints(PC_mod,time_start,time_end)
+  
+  FPCA_extract = data.frame(mean_curve,PC_curve,PC_mod)
+  
+  # get values for plot title and generate titles
+  plot_cum_var = cum_var[PC]*100
+  plot_PC_var = UnTotal(cum_var,PC)*100
+  
+  if (fpca_name == "form"){
+    if (fpca_type == 1){
+      plot_effect = "F1"
+    } else {
+      plot_effect = "F2"
+    }
+  } else {
+    if (fpca_type == 1){
+      plot_effect = "pitch"
+    } else {
+      plot_effect = "intensity"
+    }
+  }
+  
+  plot_title = sprintf("Effect of fPC%s on %s for /%s/ \n(Var: %.1f%% VarTotal: %.1f%%)",PC,plot_effect, sequence, plot_PC_var,plot_cum_var)
+  
+  if (fpca_name == "form"){
+    # if formant, check which formant and adjust limits accordingly
+    if (fpca_type == 1){
+      y_min = -1.5
+      y_max = 3.5 
+    } else {
+      y_min = -2.5
+      y_max = 2.5
+    }
+      
+  } else {
+    # alternatively, if pitch/intensity...
+    if (fpca_type == 1){
+      y_min = -50
+      y_max = 50
+    } else {
+      y_min = -12
+      y_max = 7
+    }
+  }
+  
+  ## change y label to intensity if intensity is being examined
+  if (fpca_name == "pitch" & fpca_type == 2){
+    ylabel = "Normalised Intensity"
+  } else {
+    ylabel = "Normalised Frequency"
+  }
+  
+  
+  ## If "flip_symbols" parameter argument isn't false, flip plus and minus symbols
+  if (flip_symbols == 0){
+    add_symbol = "+"
+    sub_symbol = "-"
+  } else {
+    add_symbol = "-"
+    sub_symbol = "+"
+  }
+  
+  PC_plot = ggplot(FPCA_extract, aes(x = seq(time_start,time_end,by=0.5))) +
+    
+    # plot curves
+    geom_smooth(aes(y=mean_curve),se=FALSE,color="black") +
+    geom_point(aes(y=mean_curve + PC_mod),
+               shape=add_symbol,size=5) +
+    geom_point(aes(y=mean_curve - PC_mod),
+               shape=sub_symbol,size=5) +
+    
+    # format plot
+    labs(x="Timepoint",y=ylabel,
+         title=plot_title) +
+    scale_x_continuous(breaks=seq(time_start,time_end,by=1)) + 
+    theme_bw() + ylim(y_min,y_max) +
+    theme(panel.grid = element_blank(),
+          plot.title = element_text(hjust=0.5,size=12))
+  
+  return(PC_plot)
+}
+
+## SUPPORT FUNCTION: Given a specific curve, predict a finer-detail curve 
+
+MorePoints = function(curve,time_start,time_end){
+  times=time_start:time_end
+  temp_smooth = loess(curve~times)
+  temp_smoother = predict(temp_smooth,seq(time_start,time_end,by=0.5))
+  return(temp_smoother)
+}
+
+## SUPPORT FUNCTION: Return non-cumulative variance contribution
+# ('fdapace.FPCA()' objects contain cumulative variances, not individual PC variance)
+
+UnTotal = function(vec,index){
+  if (index == 1){
+    return(vec[index])
+  } else {
+    new_vec = vec[index] - vec[index - 1]
+    return(new_vec)
+  }
+}
+
+```
+
+
+
+### Intensity fPC2 (Manuscript Figure  A1)
+
+```{r}
+arrange_ia_pc2.int = PlotPCs_caption(2,2,"ia","pitch")
+arrange_ea_pc2.int = PlotPCs_caption(2,2,"ea","pitch")
+arrange_oa_pc2.int = PlotPCs_caption(2,2,"oa","pitch")
+arrange_ua_pc2.int = PlotPCs_caption(2,2,"ua","pitch")
+
+
+IntPC2All <- grid.arrange(arrange_ia_pc2.int,arrange_ea_pc2.int, arrange_oa_pc2.int, arrange_ua_pc2.int,
+             ncol=4)
+```
+
+```{r}
+ ggsave(here("public", "Figures", "fPCA", "IntfPC2All.png") ,IntPC2All, scale=.80,   width=5000,height=1300,units="px")
+```
+
+
+
+###  F1 fPC1 (Manuscript Figure A2)  
+
+```{r}
+arrange_ia_pc1.f1 = PlotPCs_caption(1,1,"ia","form")
+arrange_ea_pc1.f1 = PlotPCs_caption(1,1,"ea","form")
+arrange_oa_pc1.f1 = PlotPCs_caption(1,1,"oa","form")
+arrange_ua_pc1.f1 = PlotPCs_caption(1,1,"ua","form")
+
+
+
+
+F1PC1All <- grid.arrange(arrange_ia_pc1.f1,arrange_ea_pc1.f1, arrange_oa_pc1.f1, arrange_ua_pc1.f1,
+             ncol=4)
+
+ ggsave(here("public", "Figures", "fPCA", "F1fPC1All.png") ,F1PC1All, scale=.80,   width=5000,height=1300,units="px")
+```
+
+### F2 fPC1+  fPC3  /ia/  (Manuscript Figure A3)  
+
+
+```{r}
+arrange_ia_pc1.f2 = PlotPCs_caption(1,2,"ia","form")
+arrange_ia_pc3.f2 = PlotPCs_caption(3,2,"ia","form")
+
+
+F2ia <- grid.arrange(arrange_ia_pc1.f2, arrange_ia_pc3.f2, ncol=2)
+
+
+ggsave(here("public", "Figures", "fPCA", "F2ia.png") ,F2ia, scale=.80,   width=2500,height=1300,units="px")
+ 
+ 
+```
+
+
 
 
 # Duration filtering (Manuscript §3.3.3)  {#sec-dur-filter}
@@ -2155,7 +2644,7 @@ duration_data <- duration_data %>%
 ```
 
 5. Filter out sequences with duration > 500 ms 
- 
+
 ```{r} 
 duration_data  <-  duration_data %>%
  filter(duration_ms < 500) 
@@ -2168,11 +2657,12 @@ duration_data$s_duration = as.numeric(duration_data$s_duration)
 duration = unique(duration_data %>% select(MatchId, s_duration))
 
 ```
-
+Note that this threshold was decided on based on manually checking the data. We found that for tokens 
+ 500ms +, the proportion of forced alignment errors was 15% or greater. However, we did not manually check the entire data set which contains more than 10,000 tokens. As a result, we do not  know exactly how many forced alignment errors remain. 
 
 We are now ready to conduct the uPCA!
 
-# uPCA  (Manuscript §4.1 ) {#sec-uCPA} 
+# uPCA  (Manuscript §4.1) {#sec-uCPA} 
 
 1. Prepare data. Combine duration data with fPCA data, and filter out any NA values for duration. 
 
@@ -2779,7 +3269,8 @@ iaresults[iaresults$PC1 < -1,]$PC1cat = "low"
 iaresultsextreme = iaresults %>% filter(PC1cat != "mid")
 
 
-results_extreme_all <- rbind(earesults, oaresults, uaresults, iaresults)
+uPC1_results_all <- rbind(earesults, oaresults, uaresults, iaresults)
+results_extreme_all  <- rbind(earesultsextreme, oaresultsextreme, uaresultsextreme, iaresultsextreme)
 ```
 
 3. Read in acoustic data
@@ -3287,7 +3778,7 @@ fplot <- femalemono %>%
    guides(colour = guide_legend(title = "uPC1 Category"), fill = "none", linewidth = "none") 
    
   
-fplot    + theme_classic() + scale_linewidth_continuous(range = c(.001, .85)) +
+fplotfinal <- fplot    + theme_classic() + scale_linewidth_continuous(range = c(.001, .85)) +
  facet_wrap(~Vowel, nrow = 2) +
   theme(
     axis.title = element_text(size = 6),  
@@ -3295,17 +3786,64 @@ fplot    + theme_classic() + scale_linewidth_continuous(range = c(.001, .85)) +
     legend.position = "bottom",
     legend.title = element_text(size = 6),
     legend.text = element_text(size = 6)  
-  )
+  ) +
+   ggtitle("Women")
 ```
-
 5. Save
 ```{r}
 ggsave(here("public", "Figures", "uPCA", "lowhighUPC1TrajectorieswithInt.pdf"),  width= 11, height= 12.5,units="cm")
 ```
 
 
-# Are the different trajectories for high and low uPC1 tokens a product of different monophthong spaces? (Manuscript footnote 1) {#sec-tangent}
-As mentioned in Footnote 1 of the manuscript, it  could be possible that speakers with predominantly high uPC1 scores and predominantly low uPC1 scores have different monophthong spaces, and
+6. Same plot, but using data from men 
+
+```{r}
+
+malemono = monophthongs %>% filter(participant_gender == "M")
+maleseq = predictions %>% filter(participant_gender == "M")
+
+mplot <- malemono %>%
+  ggplot(aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, colour = Target.teAkaSegment)) +
+   stat_ellipse(level = 0.67, geom = "polygon", alpha = 0.1, aes(fill = Target.teAkaSegment), show.legend = FALSE) +
+  scale_x_reverse() + scale_y_reverse() +
+   scale_fill_grey(start = 0.1, end = 0.9) +
+    geom_text(data= monophthong_means,
+            aes(x = F2_lobanov_2.0, y = F1_lobanov_2.0, label = Target.teAkaSegment),  show.legend = FALSE, size = 2)  +
+ geom_path(data = maleseq, aes(
+    x = F2_lobanov_2.0,
+    y = F1_lobanov_2.0,
+    colour = PC1cat, linewidth = Intensity),  
+    size = 1, show.legend = TRUE,
+    arrow = arrow(length = unit(1, "mm")), size = 1) +
+  scale_color_manual(values = c("hi" = "#F8766D", "low" = "#00BFC4")) +
+   guides(colour = guide_legend(title = "uPC1 Category"), fill = "none", linewidth = "none") 
+   
+  
+mplotfinal <- mplot    + theme_classic() + scale_linewidth_continuous(range = c(.001, .85)) +
+ facet_wrap(~Vowel, nrow = 2) +
+  theme(
+    axis.title = element_text(size = 6),  
+    axis.text = element_text(size = 6), 
+    legend.position = "bottom",
+    legend.title = element_text(size = 6),
+    legend.text = element_text(size = 6)  
+  ) +
+   ggtitle("Men")
+```
+
+```{r}
+Trajplotcombined <- cowplot::plot_grid(fplotfinal, mplotfinal,  
+                            labels = c("a", "b"), ncol = 2, align = "c", axis = "l")
+
+Trajplotcombined  
+ 
+ggsave(here("public", "Figures", "uPCA", "lowhighUPC1TrajectorieswithIntCombined.pdf"), Trajplotcombined,  width= 20, height= 12.5,units="cm")
+
+
+```
+
+# Are the different trajectories for high and low uPC1 tokens a product of different monophthong spaces? (Manuscript footnote 7) {#sec-tangent}
+As mentioned in Footnote 7 of the manuscript, it  could be possible that speakers with predominantly high uPC1 scores and predominantly low uPC1 scores have different monophthong spaces, and
 that the different trajectories we see between high and low uPC1 tokens are actually a reflection of these
 differences. To investigate this, we plot the vowel spaces of men and women who predominantly low
 uPC1 scores. The following chunks provide the code.
@@ -4208,14 +4746,16 @@ e) Is there an overall effect of mora position?|
 hyp.mod.ia.min.moraPos <- update(hyp.mod.ia, ~ . - moraPositionFactor - category:moraPositionFactor)
 anova(hyp.mod.ia, hyp.mod.ia.min.moraPos) #
 ```
-No signficant effect of mora position by itself. Indicates  that effect lies in 
+No significant effect of mora position by itself. Indicates  that effect lies in 
 interactions. 
+
+
 f) Investigating further by conducting an EMM test on the interaction with category. 
 
 ```{r}
 emmeans(hyp.mod.ia, pairwise ~ moraPositionFactor| category)
 ```
-No significant difference between mora postions within any of the categories. 
+No significant difference between mora positions within any of the categories, except for  1 - (3+)  for the Young L2 speakers. 
 
 ## /ea/ regression model
 1. Read in data, create phonological form trackers
@@ -4347,9 +4887,17 @@ b) Investigating category differences further with an EMM test
 emmeans(hyp.mod.ea, pairwise ~ category)
 ```
 
-No signficant differences. Indicates category effect lies in interactions
+No significant differences. Indicates category effect lies in interactions
 
-c) Is there a signficant overall effect of complex?
+c) Is category significant at any level of complex?
+
+```{r}
+emmeans(hyp.mod.ea, pairwise ~  category| complex)
+```
+
+
+
+d) Is there a significant overall effect of complex?
 ```{r}
 hyp.mod.ea.min.complex <- update(hyp.mod.ea, ~ . - complex - category:complex)
 
@@ -4500,7 +5048,15 @@ emmeans(hyp.mod.oa, pairwise ~  participant_gender |category)
 
 Significant differences in the L1 + L2 categories.
 
-d) Is there an overall effect of mora position?
+d) Is there an overall effect of gender?
+```{r}
+hyp.mod.oa.min.gender<- update(hyp.mod.oa, ~ . - participant_gender - category:participant_gender)
+anova(hyp.mod.oa, hyp.mod.oa.min.gender) 
+```
+yes 
+
+
+e) Is there an overall effect of mora position?
 ```{r}
 hyp.mod.oa.min.moraPos <- update(hyp.mod.oa, ~ . - moraPositionFactor - category:moraPositionFactor)
 anova(hyp.mod.oa, hyp.mod.oa.min.moraPos)
@@ -4508,7 +5064,7 @@ anova(hyp.mod.oa, hyp.mod.oa.min.moraPos)
 
 yes. 
 
-e) Investigate interaction with category further by conducting an EMM test
+f) Investigate interaction with category further by conducting an EMM test
 ```{r}
 emmeans(hyp.mod.oa, pairwise ~ moraPositionFactor| category) 
 ```
@@ -4654,6 +5210,15 @@ emmeans(hyp.mod.ua, pairwise ~  participant_gender |category)
 ```
 
 Significant gender difference in younger speakers only. 
+
+d) Is there evidence of an overall gender effect?
+
+```{r}
+hyp.mod.ua.min.gender <- update(hyp.mod.ua, ~ . - participant_gender - category:participant_gender)
+anova(hyp.mod.ua, hyp.mod.ua.min.gender)
+```
+yes
+
 ## Marginal effects plots
 ```{r}
  oa$category <- factor(oa$category,
@@ -5553,4 +6118,122 @@ ggsave(here("public", "Figures", "ChangeOverTime", "combined_plots_change.pdf"),
 
 ```
 
+# Data exploration: is there a relationship between raising of /e/ and merging of /ia/ and /ea/ (Manuscript §4.3.2) {#sec-ia-ea-merge}
 
+To this, we examine if there's a correlation between uPC1 for /ea/ and speakers F1 mean for /e/  
+Look within  speaker and gender  categories 
+
+1. Calculate mean F1 for /e/, per speaker
+
+```{r}
+e_means <- monophthongs %>% 
+  select(Target.teAkaSegment, Speaker, F1_lobanov_2.0, participant_gender, category) %>% 
+  filter(Target.teAkaSegment == "e") %>% 
+  group_by(Speaker) %>%
+  mutate(mean_F1_e = mean(F1_lobanov_2.0)) %>% 
+  select(-F1_lobanov_2.0) %>% 
+  unique()  
+ 
+```
+
+2. Calculate mean PC1 per speaker
+
+```{r}
+PC1_mean_per_speaker_ea <- earesults %>% 
+  select(Speaker, PC1, participant_gender, category) %>% 
+  group_by(Speaker) %>%
+  mutate(mean_PC1 = mean(PC1)) %>% 
+  select(-PC1) %>% 
+  unique()  %>% 
+  ungroup()
+ 
+```
+
+3. Join 
+```{r}
+PC1_mean_per_speaker_ea <- PC1_mean_per_speaker_ea %>% 
+  left_join(e_means)
+ 
+```
+
+4. Function to run pairscor() by speaker category 
+
+```{r}
+run_pairscor_by_category <- function(df, col1, col2, create_tibbles = FALSE, hist = FALSE, smooth = FALSE) {
+  
+  combos <- df %>% distinct(category)
+  results <- list()
+  
+  for (i in seq_len(nrow(combos))) {
+    cat_i <- combos$category[i]
+    
+    subset_df <- df %>% filter(category == cat_i)
+    name <- paste(cat_i,  sep = "_") %>% make.names()
+    
+    if (create_tibbles) assign(name, subset_df, envir = .GlobalEnv)
+    
+    # Run pairscor.fnc_custom (plots automatically)
+    res <- pairscor.fnc_custom(
+      subset_df %>% select(all_of(c(col1, col2))),
+      hist = hist,
+      smooth = smooth
+    )
+    
+    # Add a title on top of the plot
+    title(main = paste(cat_i, sep = " × "), line = 2)
+    
+    # Store results
+    results[[name]] <- res
+  }
+  
+  return(results)
+}
+
+
+
+```
+
+5. Run pairscor() on mean F1 and mean PC1 by speaker category 
+```{r}
+results <- run_pairscor_by_category(PC1_mean_per_speaker_ea, "mean_F1_e", "mean_PC1", create_tibbles = TRUE)
+
+```
+
+No evidence of a correlation.
+
+
+What about F1 of the onset of the sequence? Here we investigate if there's a correlation between mean F1 of time point
+1 of /ea/ and mean F1 of /e/ 
+
+1. Calculate mean F1 for timepoint 1 
+
+```{r}
+formants_filtered_ea <- read.csv(here("public", "Data", "Filtered", "Formants", "ea.csv"))
+
+F1_timepoint_1 <- formants_filtered_ea %>% 
+  select(MatchId, Speaker, time, Formant, Frequency) %>% 
+ filter(time == "1" & Formant == "F1_lobanov_2.0") %>% 
+ group_by(Speaker) %>%
+  mutate(mean_F1_timepoint1 = mean(Frequency)) %>% 
+  ungroup()
+ 
+F1_timepoint_1 <- F1_timepoint_1 %>%  
+  select(Speaker, mean_F1_timepoint1) %>% 
+  unique()
+
+```
+
+2. Join
+```{r}
+F1_timepoint_1 <- F1_timepoint_1 %>% 
+  left_join(e_means)
+
+```
+
+3. Run pairscor() by category 
+```{r}
+results <- run_pairscor_by_category(F1_timepoint_1, "mean_F1_e", "mean_F1_timepoint1", create_tibbles = TRUE)
+
+```
+
+There's only evidence of a correlation between mean F1 of /e/ and mean F1 of timepoint 1 for /ea/ for historical elders. 
