@@ -3271,11 +3271,14 @@ results_extreme_all  <- rbind(earesultsextreme, oaresultsextreme, uaresultsextre
 
 3. Read in acoustic data
 ```{r}
-int <- read.csv(here("Data", "intcentered_per_speaker.csv")) %>% 
-select(MatchId, sequence, time, intensity)
- 
-pitch <- read.csv(here("Data", "pitch_centered_per_speaker_nofilter.csv")) %>% 
-select(MatchId, sequence, time, pitch)
+int <- read.csv(here("Data", "int_filtered.csv")) %>% 
+select(MatchId, sequence, time,
+            intensity = Measure)
+
+
+pitch <- read.csv(here( "Data", "pitch_filtered.csv")) %>% 
+select(MatchId, sequence, time,
+       pitch = Measure)
 
 pitch_int <- left_join(int, pitch)
 
